@@ -10,10 +10,10 @@ interface SensorData {
   timestamp: number;
 }
 
-// Initialize Redis client (uses UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN env vars)
+// Initialize Redis client (uses Vercel's Upstash integration env vars)
 const redis = new Redis({
-  url: process.env.UPSTASH_REDIS_REST_URL!,
-  token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+  url: process.env.KV_REST_API_URL!,
+  token: process.env.KV_REST_API_TOKEN!,
 });
 
 const READINGS_KEY = 'safeward:readings';
