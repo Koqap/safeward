@@ -1,105 +1,174 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { LayoutDashboard, Activity, FileText, Settings, Bell, Menu, X, BarChart2, Shield, Search, HelpCircle, ChevronDown } from 'lucide-react';
 import { ViewState, SensorReading, Alert } from './types';
 import { SENSOR_CONFIGS, MOCK_HISTORY_LENGTH } from './constants';
 import { Dashboard } from './components/Dashboard';
 import { AIAnalysis } from './components/AIAnalysis';
 
+// API Configuration
+const API_BASE_URL = import.meta.env.VITE_API_URL || '';
+
+interface ApiSensorData {
+  device_id: string;
+  location: string;
+  methane: number;
+  temperature: number;
+  humidity: number;
+  timestamp: number;
+}
+
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<ViewState>('DASHBOARD');
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const [readings, setReadings] = useState<SensorReading[]>([]);
   const [alerts, setAlerts] = useState<Alert[]>([]);
+  const [isConnected, setIsConnected] = useState(false);
 
-  // Mock Data Generation
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const now = Date.now();
-      const newReadings: SensorReading[] = SENSOR_CONFIGS.map(config => {
-        // Base value + random noise
-        let baseValue = (config.safeRange[0] + config.safeRange[1]) / 2;
-        let noise = (Math.random() - 0.5) * 5;
+  // Convert API data to SensorReading format
+  const convertApiDataToReadings = useCallback((apiData: ApiSensorData[]): SensorReading[] => {
+    const newReadings: SensorReading[] = [];
+    
+    apiData.forEach(data => {
+      // Find matching configs for this location
+      const locationConfigs = SENSOR_CONFIGS.filter(c => c.location === data.location);
+      
+      locationConfigs.forEach(config => {
+        let value = 0;
+        if (config.type === 'METHANE') value = data.methane;
+        else if (config.type === 'TEMPERATURE') value = data.temperature;
+        else if (config.type === 'HUMIDITY') value = data.humidity;
         
-        // Simulate occasional spikes for Methane to demonstrate Critical alerts
-        // Threshold is 800. Critical is 960 (800 * 1.2).
-        if (config.type === 'METHANE' && Math.random() > 0.90) {
-           noise += (Math.random() * 900); // Can spike up to ~1150
-        }
-        // Simulate Temp fluctuation
-        if (config.type === 'TEMPERATURE') {
-           noise = (Math.sin(now / 10000) * 3) + (Math.random() - 0.5);
-        }
-
-        let val = baseValue + noise;
-        val = Math.max(0, Number(val.toFixed(1)));
-
-        return {
+        newReadings.push({
           id: config.id,
           type: config.type,
-          value: val,
+          value: Number(value.toFixed(1)),
           unit: config.unit,
+          timestamp: data.timestamp,
+          location: data.location
+        });
+      });
+    });
+    
+    return newReadings;
+  }, []);
+
+  // Check thresholds and create alerts
+  const checkThresholds = useCallback((newReadings: SensorReading[]) => {
+    const now = Date.now();
+    
+    newReadings.forEach(reading => {
+      const config = SENSOR_CONFIGS.find(c => c.id === reading.id);
+      if (!config) return;
+
+      let severity: 'WARNING' | 'CRITICAL' | null = null;
+      let message = '';
+
+      if (config.type === 'METHANE') {
+        // Critical: > 20% above warning threshold
+        if (reading.value > (config.warningThreshold * 1.2)) {
+           severity = 'CRITICAL';
+           message = `CRITICAL METHANE LEAK at ${config.location}: ${reading.value}${config.unit}`;
+        } else if (reading.value >= config.warningThreshold) {
+           severity = 'WARNING';
+           message = `Elevated Methane levels at ${config.location}: ${reading.value}${config.unit}`;
+        }
+      } else {
+         // General logic for other sensors
+         if (reading.value > config.warningThreshold) {
+           const isCritical = reading.value > (config.warningThreshold * 1.2);
+           severity = isCritical ? 'CRITICAL' : 'WARNING';
+           message = `${config.type} High at ${config.location}: ${reading.value}${config.unit}`;
+         }
+      }
+
+      if (severity) {
+        const newAlert: Alert = {
+          id: `${reading.id}-${now}`,
+          sensorId: reading.id,
+          message: message,
+          severity: severity,
           timestamp: now,
-          location: config.location
+          acknowledged: false
         };
-      });
-
-      setReadings(prev => {
-        const next = [...prev, ...newReadings];
-        return next.slice(-MOCK_HISTORY_LENGTH * SENSOR_CONFIGS.length);
-      });
-
-      // Check Thresholds with specific Methane logic
-      newReadings.forEach(reading => {
-        const config = SENSOR_CONFIGS.find(c => c.id === reading.id);
-        if (!config) return;
-
-        let severity: 'WARNING' | 'CRITICAL' | null = null;
-        let message = '';
-
-        if (config.type === 'METHANE') {
-          // Critical: > 20% above warning threshold
-          if (reading.value > (config.warningThreshold * 1.2)) {
-             severity = 'CRITICAL';
-             message = `CRITICAL METHANE LEAK at ${config.location}: ${reading.value}${config.unit}`;
-          } else if (reading.value >= config.warningThreshold) {
-             severity = 'WARNING';
-             message = `Elevated Methane levels at ${config.location}: ${reading.value}${config.unit}`;
+        
+        // Avoid duplicate alerts in short timeframe
+        setAlerts(prev => {
+          const lastAlert = prev.filter(a => a.sensorId === reading.id).pop();
+          // Debounce alert if it's recent (10s) and not acknowledged
+          if (lastAlert && (now - lastAlert.timestamp < 10000) && !lastAlert.acknowledged) {
+            return prev;
           }
-        } else {
-           // General logic for other sensors
-           if (reading.value > config.warningThreshold) {
-             const isCritical = reading.value > (config.warningThreshold * 1.2);
-             severity = isCritical ? 'CRITICAL' : 'WARNING';
-             message = `${config.type} High at ${config.location}: ${reading.value}${config.unit}`;
-           }
-        }
+          return [...prev, newAlert];
+        });
+      }
+    });
+  }, []);
 
-        if (severity) {
-          const newAlert: Alert = {
-            id: `${reading.id}-${now}`,
-            sensorId: reading.id,
-            message: message,
-            severity: severity,
-            timestamp: now,
-            acknowledged: false
-          };
+  // Fetch data from API
+  const fetchSensorData = useCallback(async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/readings?limit=50`);
+      
+      if (response.ok) {
+        const data = await response.json();
+        setIsConnected(true);
+        
+        if (data.readings && data.readings.length > 0) {
+          const newReadings = convertApiDataToReadings(data.readings);
           
-          // Avoid duplicate alerts in short timeframe
-          setAlerts(prev => {
-            const lastAlert = prev.filter(a => a.sensorId === reading.id).pop();
-            // Debounce alert if it's recent (10s) and not acknowledged
-            if (lastAlert && (now - lastAlert.timestamp < 10000) && !lastAlert.acknowledged) {
-              return prev;
-            }
-            return [...prev, newAlert];
+          setReadings(prev => {
+            const next = [...prev, ...newReadings];
+            // Deduplicate by id and timestamp
+            const seen = new Set<string>();
+            const unique = next.filter(r => {
+              const key = `${r.id}-${r.timestamp}`;
+              if (seen.has(key)) return false;
+              seen.add(key);
+              return true;
+            });
+            return unique.slice(-MOCK_HISTORY_LENGTH * SENSOR_CONFIGS.length);
           });
+          
+          // Check thresholds for latest readings only
+          const latestByLocation: Record<string, SensorReading[]> = {};
+          newReadings.forEach(r => {
+            if (!latestByLocation[r.location]) latestByLocation[r.location] = [];
+            latestByLocation[r.location].push(r);
+          });
+          
+          // Get latest reading per sensor
+          const latestReadings: SensorReading[] = [];
+          Object.values(latestByLocation).forEach(locationReadings => {
+            const byId: Record<string, SensorReading> = {};
+            locationReadings.forEach(r => {
+              if (!byId[r.id] || r.timestamp > byId[r.id].timestamp) {
+                byId[r.id] = r;
+              }
+            });
+            latestReadings.push(...Object.values(byId));
+          });
+          
+          checkThresholds(latestReadings);
         }
-      });
+      } else {
+        setIsConnected(false);
+      }
+    } catch (error) {
+      console.log('API not available, waiting for ESP32 data...');
+      setIsConnected(false);
+    }
+  }, [convertApiDataToReadings, checkThresholds]);
 
-    }, 3000);
+  // Poll API for sensor data
+  useEffect(() => {
+    // Initial fetch
+    fetchSensorData();
+    
+    // Set up polling interval
+    const interval = setInterval(fetchSensorData, 3000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [fetchSensorData]);
 
   const dismissAlert = (id: string) => {
     setAlerts(prev => prev.map(a => a.id === id ? { ...a, acknowledged: true } : a));
@@ -200,12 +269,24 @@ const App: React.FC = () => {
 
           <div className="flex items-center gap-4">
              {/* Operational Status Pill */}
-             <div className="hidden md:flex items-center gap-2 bg-emerald-50 px-3 py-1.5 rounded-full border border-emerald-100">
+             <div className={`hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full border ${
+               isConnected 
+                 ? 'bg-emerald-50 border-emerald-100' 
+                 : 'bg-amber-50 border-amber-100'
+             }`}>
                 <span className="relative flex h-2.5 w-2.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                  <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
+                    isConnected ? 'bg-emerald-400' : 'bg-amber-400'
+                  }`}></span>
+                  <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${
+                    isConnected ? 'bg-emerald-500' : 'bg-amber-500'
+                  }`}></span>
                 </span>
-                <span className="text-xs font-semibold text-emerald-700">All Systems Operational</span>
+                <span className={`text-xs font-semibold ${
+                  isConnected ? 'text-emerald-700' : 'text-amber-700'
+                }`}>
+                  {isConnected ? 'ESP32 Connected' : 'Waiting for ESP32...'}
+                </span>
              </div>
 
              <div className="h-8 w-px bg-slate-200 mx-2 hidden md:block"></div>

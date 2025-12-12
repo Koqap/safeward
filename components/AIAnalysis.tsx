@@ -29,7 +29,7 @@ export const AIAnalysis: React.FC<AIAnalysisProps> = ({ readings, alerts }) => {
           </div>
           <div>
             <h2 className="text-2xl font-bold">SafeWard AI Analyst</h2>
-            <p className="text-blue-100 opacity-90">Powered by Gemini models</p>
+            <p className="text-blue-100 opacity-90">Powered by Mistral AI</p>
           </div>
         </div>
         <p className="max-w-xl text-blue-50 leading-relaxed mb-6">

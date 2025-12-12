@@ -1,54 +1,73 @@
-import { GoogleGenAI } from "@google/genai";
 import { SensorReading, Alert } from "../types";
 
-const apiKey = process.env.API_KEY || '';
-const ai = new GoogleGenAI({ apiKey });
+// API Configuration
+const API_BASE_URL = import.meta.env.VITE_API_URL || '';
+
+interface ApiSensorData {
+  device_id: string;
+  location: string;
+  methane: number;
+  temperature: number;
+  humidity: number;
+  timestamp: number;
+}
+
+// Convert SensorReading to ApiSensorData format for the API
+const convertReadingsToApiFormat = (readings: SensorReading[]): ApiSensorData[] => {
+  // Group readings by timestamp and location
+  const grouped: Record<string, ApiSensorData> = {};
+  
+  readings.forEach(reading => {
+    const key = `${reading.location}-${reading.timestamp}`;
+    if (!grouped[key]) {
+      grouped[key] = {
+        device_id: `esp32-${reading.location.toLowerCase().replace(' ', '')}`,
+        location: reading.location,
+        methane: 0,
+        temperature: 0,
+        humidity: 0,
+        timestamp: reading.timestamp
+      };
+    }
+    
+    if (reading.type === 'METHANE') grouped[key].methane = reading.value;
+    else if (reading.type === 'TEMPERATURE') grouped[key].temperature = reading.value;
+    else if (reading.type === 'HUMIDITY') grouped[key].humidity = reading.value;
+  });
+  
+  return Object.values(grouped);
+};
 
 export const analyzeEnvironmentalData = async (
   readings: SensorReading[],
   alerts: Alert[]
 ): Promise<string> => {
-  if (!apiKey) {
-    return "API Key is missing. Unable to perform AI analysis.";
-  }
-
   try {
-    // Summarize recent data for the prompt
-    const recentReadings = readings.slice(-30); // Last 30 readings
-    const dataSummary = JSON.stringify(recentReadings.map(r => ({
-      t: new Date(r.timestamp).toLocaleTimeString(),
-      type: r.type,
-      val: r.value,
-      loc: r.location
-    })));
-
-    const alertSummary = JSON.stringify(alerts.filter(a => !a.acknowledged));
-
-    const prompt = `
-      You are SafeWard AI, an expert hospital environmental safety assistant.
-      
-      Here is the recent sensor data from our IoT network (JSON format):
-      ${dataSummary}
-
-      Here are active alerts:
-      ${alertSummary}
-
-      Please provide a concise safety report.
-      1. Analyze the trends. Is the environment stable?
-      2. Identify any potential hazards (infection risks due to temp/humidity, fire risks due to methane).
-      3. Recommend specific actions for hospital staff.
-      
-      Keep the tone professional and clinical.
-    `;
-
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: prompt,
+    // Convert readings to API format
+    const apiReadings = convertReadingsToApiFormat(readings.slice(-30));
+    
+    // Call the backend API for AI analysis
+    const response = await fetch(`${API_BASE_URL}/api/analyze`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        readings: apiReadings,
+        alerts: alerts.filter(a => !a.acknowledged)
+      })
     });
 
-    return response.text || "No analysis could be generated.";
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: 'Unknown error' }));
+      console.error('AI Analysis API error:', error);
+      return `Unable to perform AI analysis: ${error.error || 'API error'}`;
+    }
+
+    const data = await response.json();
+    return data.analysis || "No analysis could be generated.";
   } catch (error) {
-    console.error("Gemini Analysis Error:", error);
-    return "An error occurred while communicating with the AI service.";
+    console.error("AI Analysis Error:", error);
+    return "An error occurred while communicating with the AI service. Please ensure the API is available.";
   }
 };
