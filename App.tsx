@@ -4,6 +4,10 @@ import { ViewState, SensorReading, Alert } from './types';
 import { SENSOR_CONFIGS, MOCK_HISTORY_LENGTH } from './constants';
 import { Dashboard } from './components/Dashboard';
 import { AIAnalysis } from './components/AIAnalysis';
+import { SensorsView } from './components/SensorsView';
+import { AlertsView } from './components/AlertsView';
+import { AnalyticsView } from './components/AnalyticsView';
+import { SettingsView } from './components/SettingsView';
 
 // API Configuration
 const API_BASE_URL = import.meta.env.VITE_API_URL || '';
@@ -214,10 +218,7 @@ const App: React.FC = () => {
             <button
               key={item.id}
               onClick={() => {
-                // Only Dashboard and AI Analysis are fully implemented in this demo
-                if (item.id === 'DASHBOARD' || item.id === 'AI_ANALYSIS') {
-                   setCurrentView(item.id as ViewState);
-                }
+                setCurrentView(item.id as ViewState);
                 setSidebarOpen(false);
               }}
               className={`
@@ -309,25 +310,26 @@ const App: React.FC = () => {
         {/* Scrollable Content Area */}
         <div className="flex-1 overflow-auto bg-slate-50/50 p-4 sm:p-6 lg:p-8">
            {currentView === 'DASHBOARD' && (
-             <Dashboard 
-               configs={SENSOR_CONFIGS} 
-               readings={readings} 
-               alerts={alerts} 
-             />
+              <Dashboard 
+                configs={SENSOR_CONFIGS} 
+                readings={readings} 
+                alerts={alerts} 
+              />
+           )}
+           {currentView === 'SENSORS' && (
+              <SensorsView configs={SENSOR_CONFIGS} readings={readings} />
+           )}
+           {currentView === 'ALERTS' && (
+              <AlertsView alerts={alerts} onDismiss={dismissAlert} />
            )}
            {currentView === 'AI_ANALYSIS' && (
-             <AIAnalysis readings={readings} alerts={alerts} />
+              <AIAnalysis readings={readings} alerts={alerts} />
            )}
-           {(currentView !== 'DASHBOARD' && currentView !== 'AI_ANALYSIS') && (
-             <div className="flex flex-col items-center justify-center h-full text-center">
-               <div className="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center mb-6">
-                 <Activity className="w-10 h-10 text-slate-300" />
-               </div>
-               <h3 className="text-xl font-bold text-slate-800">Module Under Development</h3>
-               <p className="text-slate-500 mt-2 max-w-sm">
-                 The {navItems.find(n => n.id === currentView)?.label} module is currently being integrated with the sensor network.
-               </p>
-             </div>
+           {currentView === 'ANALYTICS' && (
+              <AnalyticsView configs={SENSOR_CONFIGS} readings={readings} alerts={alerts} />
+           )}
+           {currentView === 'SETTINGS' && (
+              <SettingsView configs={SENSOR_CONFIGS} isConnected={isConnected} />
            )}
         </div>
         
