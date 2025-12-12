@@ -43,8 +43,18 @@ export const analyzeEnvironmentalData = async (
   alerts: Alert[]
 ): Promise<string> => {
   try {
-    // Convert readings to API format
-    const apiReadings = convertReadingsToApiFormat(readings.slice(-30));
+    // Filter to only include recent readings (last 30 seconds) - only analyze active wards
+    const now = Date.now();
+    const recentThreshold = 30000; // 30 seconds
+    const recentReadings = readings.filter(r => (now - r.timestamp) < recentThreshold);
+    
+    // If no recent readings, return a message
+    if (recentReadings.length === 0) {
+      return "No recent sensor data available. Please ensure ESP32 devices are actively sending data.";
+    }
+    
+    // Convert readings to API format (use recent readings, up to 50)
+    const apiReadings = convertReadingsToApiFormat(recentReadings.slice(-50));
     
     // Call the backend API for AI analysis
     const response = await fetch(`${API_BASE_URL}/api/analyze`, {

@@ -6,21 +6,29 @@
  * Use this for testing the API without actual hardware.
  * 
  * Usage:
- *   node esp32_simulator.js [API_URL]
+ *   node esp32_simulator.js [API_URL] [WARDS]
  * 
  * Example:
- *   node esp32_simulator.js http://localhost:3000/api/receive
  *   node esp32_simulator.js https://your-app.vercel.app/api/receive
+ *   node esp32_simulator.js https://your-app.vercel.app/api/receive A
+ *   node esp32_simulator.js https://your-app.vercel.app/api/receive A,B
+ *   node esp32_simulator.js https://your-app.vercel.app/api/receive B,C
  */
 
 const API_URL = process.argv[2] || 'http://localhost:3000/api/receive';
+const WARD_FILTER = process.argv[3] ? process.argv[3].toUpperCase().split(',') : null;
 
 // Device configurations (simulating 3 ESP32 devices)
-const devices = [
+const ALL_DEVICES = [
   { id: 'esp32-001', location: 'Ward A' },
   { id: 'esp32-002', location: 'Ward B' },
   { id: 'esp32-003', location: 'Ward C' }
 ];
+
+// Filter devices if ward filter specified
+const devices = WARD_FILTER 
+  ? ALL_DEVICES.filter(d => WARD_FILTER.some(w => d.location.includes(w)))
+  : ALL_DEVICES;
 
 // Simulation parameters
 const SEND_INTERVAL = 3000; // 3 seconds
@@ -30,7 +38,7 @@ console.log('========================================');
 console.log('  SafeWard ESP32 Simulator');
 console.log('========================================');
 console.log(`API Endpoint: ${API_URL}`);
-console.log(`Simulating ${devices.length} devices`);
+console.log(`Simulating: ${devices.map(d => d.location).join(', ')}`);
 console.log('Press Ctrl+C to stop\n');
 
 // Simulate sensor readings with realistic variations

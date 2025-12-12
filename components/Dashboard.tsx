@@ -170,9 +170,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ configs, readings, alerts 
     const tempHumConfigs = configs.filter(c => c.type === 'TEMPERATURE' || c.type === 'HUMIDITY');
     const locations = [...new Set(configs.map(c => c.location))];
     
-    // Count how many sensors have recent readings (within last 30 seconds)
+    // Count how many sensors have recent readings (within last 10 seconds)
     const now = Date.now();
-    const recentThreshold = 30000; // 30 seconds
+    const recentThreshold = 10000; // 10 seconds
     
     const onlineMethane = methaneConfigs.filter(c => {
       const reading = readings.filter(r => r.id === c.id).pop();
