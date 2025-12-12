@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { LayoutDashboard, Activity, FileText, Settings, Bell, Menu, X, BarChart2, Shield, Search, HelpCircle, ChevronDown } from 'lucide-react';
 import { ViewState, SensorReading, Alert } from './types';
-import { SENSOR_CONFIGS, MOCK_HISTORY_LENGTH } from './constants';
+import { SENSOR_CONFIGS, HISTORY_LIMIT } from './constants';
 import { Dashboard } from './components/Dashboard';
 import { AIAnalysis } from './components/AIAnalysis';
 import { SensorsView } from './components/SensorsView';
@@ -86,23 +86,29 @@ const App: React.FC = () => {
       }
 
       if (severity) {
+        // Use reading timestamp for ID to be deterministic and allow history processing
+        const alertId = `${reading.id}-${reading.timestamp}`;
+        
         const newAlert: Alert = {
-          id: `${reading.id}-${now}`,
+          id: alertId,
           sensorId: reading.id,
           message: message,
           severity: severity,
-          timestamp: now,
+          timestamp: reading.timestamp,
           acknowledged: false
         };
         
-        // Avoid duplicate alerts in short timeframe
         setAlerts(prev => {
-          const lastAlert = prev.filter(a => a.sensorId === reading.id).pop();
-          // Debounce alert if it's recent (10s) and not acknowledged
-          if (lastAlert && (now - lastAlert.timestamp < 10000) && !lastAlert.acknowledged) {
-            return prev;
+          // Check if alert already exists
+          if (prev.some(a => a.id === alertId)) return prev;
+          
+          // Avoid duplicate alerts in short timeframe (10s) for same sensor
+          const lastAlert = prev.filter(a => a.sensorId === reading.id).sort((a, b) => b.timestamp - a.timestamp)[0];
+          if (lastAlert && (reading.timestamp - lastAlert.timestamp < 10000) && !lastAlert.acknowledged) {
+             return prev;
           }
-          return [...prev, newAlert];
+          
+          return [...prev, newAlert].sort((a, b) => b.timestamp - a.timestamp);
         });
       }
     });
@@ -111,7 +117,7 @@ const App: React.FC = () => {
   // Fetch data from API
   const fetchSensorData = useCallback(async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/readings?limit=50`);
+      const response = await fetch(`${API_BASE_URL}/api/readings?limit=100`);
       
       if (response.ok) {
         const data = await response.json();
@@ -131,29 +137,12 @@ const App: React.FC = () => {
               seen.add(key);
               return true;
             });
-            return unique.slice(-MOCK_HISTORY_LENGTH * SENSOR_CONFIGS.length);
+            return unique.sort((a, b) => a.timestamp - b.timestamp).slice(-HISTORY_LIMIT * SENSOR_CONFIGS.length);
           });
           
-          // Check thresholds for latest readings only
-          const latestByLocation: Record<string, SensorReading[]> = {};
-          newReadings.forEach(r => {
-            if (!latestByLocation[r.location]) latestByLocation[r.location] = [];
-            latestByLocation[r.location].push(r);
-          });
-          
-          // Get latest reading per sensor
-          const latestReadings: SensorReading[] = [];
-          Object.values(latestByLocation).forEach(locationReadings => {
-            const byId: Record<string, SensorReading> = {};
-            locationReadings.forEach(r => {
-              if (!byId[r.id] || r.timestamp > byId[r.id].timestamp) {
-                byId[r.id] = r;
-              }
-            });
-            latestReadings.push(...Object.values(byId));
-          });
-          
-          checkThresholds(latestReadings);
+          // Check thresholds for ALL new readings to ensure history is captured
+          // This ensures that if you load the page and there was a critical event 5 mins ago, you see it.
+          checkThresholds(newReadings);
         } else {
           // No readings yet - ESP32 hasn't sent data
           setIsConnected(false);

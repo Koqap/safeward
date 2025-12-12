@@ -91,4 +91,4 @@ export const SENSOR_CONFIGS: SensorConfig[] = [
   },
 ];
 
-export const MOCK_HISTORY_LENGTH = 50; // Keep last 50 readings for charts
+export const HISTORY_LIMIT = 100; // Keep last 100 readings for charts
