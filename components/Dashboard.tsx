@@ -61,23 +61,31 @@ const WardRow: React.FC<{
       : 'bg-emerald-400';
 
   return (
-    <div className={`rounded-xl border ${statusColor} p-5 transition-all mb-4 relative overflow-hidden`}>
+    <div className={`rounded-2xl border ${statusColor} p-6 transition-all duration-300 mb-6 relative overflow-hidden group hover:shadow-lg ${isCritical ? 'shadow-red-100' : 'shadow-sm'}`}>
       {/* Decorative colored bar on left */}
       <div className={`absolute top-0 left-0 bottom-0 w-1.5 ${decorativeBarColor}`} />
+      
+      {/* Background gradient for critical state */}
+      {isCritical && (
+        <div className="absolute inset-0 bg-red-50/50 animate-pulse pointer-events-none" />
+      )}
 
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pl-2">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pl-2 relative z-10">
         
         {/* Header Section */}
-        <div className="flex-shrink-0 min-w-[200px]">
-          <div className="flex items-center gap-3">
-             <div className={`p-2 rounded-lg ${isCritical ? 'bg-red-100 text-red-600' : isWarning ? 'bg-amber-100 text-amber-600' : 'bg-emerald-100 text-emerald-600'}`}>
-                {isCritical ? <Siren className="w-6 h-6 animate-pulse" /> : isWarning ? <Wind className="w-6 h-6" /> : <Activity className="w-6 h-6" />}
+        <div className="flex-shrink-0 min-w-[220px]">
+          <div className="flex items-center gap-4">
+             <div className={`p-3 rounded-xl shadow-sm ${isCritical ? 'bg-red-100 text-red-600' : isWarning ? 'bg-amber-100 text-amber-600' : 'bg-emerald-100 text-emerald-600'}`}>
+                {isCritical ? <Siren className="w-8 h-8 animate-pulse" /> : isWarning ? <Wind className="w-8 h-8" /> : <Activity className="w-8 h-8" />}
              </div>
              <div>
-               <h3 className="font-bold text-slate-800 text-lg">{location}</h3>
+               <h3 className="font-bold text-slate-800 text-xl tracking-tight">{location}</h3>
                {/* Mock Room Number logic for display */}
-               <p className="text-xs text-slate-500 font-medium">Room {location === 'Ward A' ? '101' : location === 'Ward B' ? '204' : '305'}</p>
-               <p className="text-xs text-slate-400 mt-0.5">MQ-5 Sensor #{methane?.config?.id.split('-')[1].toUpperCase() || '00'}</p>
+               <p className="text-xs text-slate-500 font-semibold uppercase tracking-wide">Room {location === 'Ward A' ? '101' : location === 'Ward B' ? '204' : '305'}</p>
+               <div className="flex items-center gap-1.5 mt-1">
+                 <div className={`w-2 h-2 rounded-full ${isCritical ? 'bg-red-500 animate-ping' : 'bg-emerald-500'}`} />
+                 <p className="text-[10px] text-slate-400 font-mono">ID: {methane?.config?.id.split('-')[1].toUpperCase() || '00'}</p>
+               </div>
              </div>
           </div>
         </div>
@@ -85,46 +93,71 @@ const WardRow: React.FC<{
         {/* Metrics Grid */}
         <div className="flex-1 grid grid-cols-2 md:grid-cols-3 gap-8">
            {/* Methane */}
-           <div>
-             <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Methane Level</p>
-             <div className={`text-2xl font-bold ${isCritical ? 'text-red-600' : isWarning ? 'text-amber-600' : 'text-emerald-600'}`}>
+           <div className="relative group/metric">
+             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 flex items-center gap-1">
+               Methane Level
+               {isCritical && <AlertTriangle className="w-3 h-3 text-red-500" />}
+             </p>
+             <div className={`text-3xl font-black tracking-tight transition-colors ${isCritical ? 'text-red-600' : isWarning ? 'text-amber-600' : 'text-emerald-600'}`}>
                {methane?.data ? Math.round(methane.data.value) : '--'} 
-               <span className="text-sm font-medium ml-1 text-slate-500">ppm</span>
+               <span className="text-sm font-semibold ml-1 text-slate-400">ppm</span>
+             </div>
+             {/* Mini bar chart visual */}
+             <div className="h-1.5 w-full bg-slate-100 rounded-full mt-2 overflow-hidden">
+               <div 
+                 className={`h-full rounded-full transition-all duration-500 ${isCritical ? 'bg-red-500' : isWarning ? 'bg-amber-500' : 'bg-emerald-500'}`} 
+                 style={{ width: `${Math.min(((methane?.data?.value || 0) / 1000) * 100, 100)}%` }}
+               />
              </div>
            </div>
 
            {/* Temperature */}
            <div>
-             <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Temperature</p>
-             <div className="text-2xl font-bold text-slate-700">
+             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Temperature</p>
+             <div className="text-3xl font-black text-slate-700 tracking-tight">
                {temp?.data ? temp.data.value.toFixed(1) : '--'}
-               <span className="text-sm font-medium ml-1 text-slate-500">°C</span>
+               <span className="text-sm font-semibold ml-1 text-slate-400">°C</span>
+             </div>
+             <div className="h-1.5 w-full bg-slate-100 rounded-full mt-2 overflow-hidden">
+               <div 
+                 className="h-full rounded-full bg-blue-500 transition-all duration-500"
+                 style={{ width: `${Math.min(((temp?.data?.value || 0) / 40) * 100, 100)}%` }}
+               />
              </div>
            </div>
 
            {/* Humidity */}
            <div className="hidden md:block">
-             <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Humidity</p>
-             <div className="text-2xl font-bold text-slate-700">
+             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Humidity</p>
+             <div className="text-3xl font-black text-slate-700 tracking-tight">
                {hum?.data ? Math.round(hum.data.value) : '--'}
-               <span className="text-sm font-medium ml-1 text-slate-500">%</span>
+               <span className="text-sm font-semibold ml-1 text-slate-400">%</span>
+             </div>
+             <div className="h-1.5 w-full bg-slate-100 rounded-full mt-2 overflow-hidden">
+               <div 
+                 className="h-full rounded-full bg-cyan-500 transition-all duration-500"
+                 style={{ width: `${Math.min((hum?.data?.value || 0), 100)}%` }}
+               />
              </div>
            </div>
         </div>
 
-        {/* Status Pill */}
-        <div className="self-start md:self-center">
-          <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide 
-            ${isCritical ? 'bg-red-100 text-red-700 animate-pulse' : isWarning ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}`}>
+        {/* Status Pill & Action */}
+        <div className="self-start md:self-center flex flex-col items-end gap-3">
+          <span className={`px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wide shadow-sm
+            ${isCritical ? 'bg-red-100 text-red-700 animate-pulse ring-2 ring-red-200' : isWarning ? 'bg-amber-100 text-amber-700 ring-1 ring-amber-200' : 'bg-emerald-100 text-emerald-700 ring-1 ring-emerald-200'}`}>
             {isCritical ? 'CRITICAL LEAK' : isWarning ? 'Warning' : 'Safe'}
           </span>
+          
+          <button className="opacity-0 group-hover:opacity-100 transition-all duration-200 transform translate-x-2 group-hover:translate-x-0 text-xs font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1">
+            View Details <ChevronDown className="w-3 h-3 -rotate-90" />
+          </button>
         </div>
       </div>
     </div>
   );
 };
 
-// Side Panel Status Card
 const StatusCard: React.FC<{
   icon: React.ElementType;
   label: string;
@@ -134,19 +167,22 @@ const StatusCard: React.FC<{
 }> = ({ icon: Icon, label, subLabel, countStr, status }) => {
   const isOnline = status === 'Online' || status === 'Active';
   return (
-    <div className={`${isOnline ? 'bg-emerald-50 border-emerald-100' : 'bg-slate-50 border-slate-200'} border rounded-xl p-4 flex items-center justify-between mb-3`}>
-       <div className="flex items-center gap-3">
-          <div className={`${isOnline ? 'bg-emerald-500' : 'bg-slate-400'} p-2 rounded-lg text-white`}>
+    <div className={`${isOnline ? 'bg-emerald-50/50 border-emerald-100' : 'bg-slate-50 border-slate-200'} border rounded-xl p-4 flex items-center justify-between mb-3 transition-all hover:shadow-md group`}>
+       <div className="flex items-center gap-4">
+          <div className={`${isOnline ? 'bg-gradient-to-br from-emerald-400 to-emerald-600 shadow-emerald-200' : 'bg-slate-400'} p-2.5 rounded-xl text-white shadow-lg`}>
              <Icon className="w-5 h-5" />
           </div>
           <div>
-             <p className="font-bold text-slate-800 text-sm">{label}</p>
-             <p className="text-xs text-slate-500">{subLabel}</p>
+             <p className="font-bold text-slate-800 text-sm group-hover:text-blue-700 transition-colors">{label}</p>
+             <p className="text-xs text-slate-500 font-medium">{subLabel}</p>
           </div>
        </div>
        <div className="text-right">
-          <p className={`text-lg font-bold ${isOnline ? 'text-emerald-700' : 'text-slate-500'} leading-tight`}>{countStr}</p>
-          <p className={`text-[10px] ${isOnline ? 'text-emerald-600' : 'text-slate-400'} font-medium`}>{status}</p>
+          <p className={`text-xl font-black ${isOnline ? 'text-emerald-700' : 'text-slate-500'} leading-tight tracking-tight`}>{countStr}</p>
+          <div className="flex items-center justify-end gap-1 mt-0.5">
+            <div className={`w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`} />
+            <p className={`text-[10px] ${isOnline ? 'text-emerald-600' : 'text-slate-400'} font-bold uppercase tracking-wide`}>{status}</p>
+          </div>
        </div>
     </div>
   );

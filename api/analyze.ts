@@ -60,20 +60,26 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const alertSummary = JSON.stringify((alerts || []).filter(a => !a.acknowledged));
 
+    // Get unique locations from the data
+    const activeLocations = [...new Set(recentReadings.map(r => r.location))];
+
     const prompt = `You are SafeWard AI, an expert hospital environmental safety assistant.
       
-Here is the recent sensor data from our IoT network (JSON format):
+Here is the recent sensor data from our IoT network (JSON format).
+**IMPORTANT: Only analyze data for these active wards: ${activeLocations.join(', ')}. Do NOT mention or speculate about other wards that are not in the data.**
+
+Data:
 ${dataSummary}
 
-Here are active alerts:
+Active alerts:
 ${alertSummary}
 
-Please provide a concise safety report.
+Please provide a concise safety report for ONLY the wards listed above (${activeLocations.join(', ')}).
 1. Analyze the trends. Is the environment stable?
 2. Identify any potential hazards (infection risks due to temp/humidity, fire risks due to methane).
 3. Recommend specific actions for hospital staff.
 
-Keep the tone professional and clinical.`;
+Keep the tone professional and clinical. Only report on wards that have data provided.`;
 
     // Call OpenRouter API
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {

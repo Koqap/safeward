@@ -192,32 +192,33 @@ const App: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen flex bg-slate-50 text-slate-800 font-sans">
+    <div className="min-h-screen flex bg-slate-50 text-slate-800 font-sans selection:bg-blue-100 selection:text-blue-900">
       {/* Mobile Sidebar Overlay */}
       {isSidebarOpen && (
         <div 
-          className="fixed inset-0 bg-black/20 z-20 lg:hidden"
+          className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-20 lg:hidden transition-opacity"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
       {/* Sidebar */}
       <aside className={`
-        fixed inset-y-0 left-0 z-30 w-64 bg-white border-r border-slate-200 transform transition-transform duration-200 ease-in-out flex flex-col
+        fixed inset-y-0 left-0 z-30 w-72 bg-white border-r border-slate-200 shadow-xl lg:shadow-none transform transition-transform duration-300 ease-in-out flex flex-col
         ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
         lg:translate-x-0 lg:static
       `}>
-        <div className="h-16 flex items-center px-6 border-b border-slate-100">
-          <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center mr-3 text-white">
-             <Shield className="w-5 h-5" />
+        <div className="h-20 flex items-center px-8 border-b border-slate-100 bg-gradient-to-r from-white to-slate-50">
+          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mr-3 text-white shadow-lg shadow-blue-500/20">
+             <Shield className="w-6 h-6" />
           </div>
           <div>
-            <span className="block text-lg font-bold text-slate-800 leading-none">SafeWard</span>
-            <span className="text-xs text-slate-500 font-medium">IoT Monitoring</span>
+            <span className="block text-xl font-bold text-slate-800 tracking-tight">SafeWard</span>
+            <span className="text-xs text-slate-500 font-medium tracking-wide uppercase">IoT Monitoring</span>
           </div>
         </div>
 
-        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+        <nav className="flex-1 p-6 space-y-2 overflow-y-auto">
+          <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4 px-2">Menu</div>
           {navItems.map(item => (
             <button
               key={item.id}
@@ -226,58 +227,68 @@ const App: React.FC = () => {
                 setSidebarOpen(false);
               }}
               className={`
-                w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors
+                w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-medium transition-all duration-200 group
                 ${currentView === item.id 
-                  ? 'bg-blue-50 text-blue-600' 
-                  : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'}
+                  ? 'bg-blue-50 text-blue-700 shadow-sm ring-1 ring-blue-100' 
+                  : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900 hover:translate-x-1'}
               `}
             >
-              <item.icon className="w-5 h-5" />
+              <item.icon className={`w-5 h-5 transition-colors ${currentView === item.id ? 'text-blue-600' : 'text-slate-400 group-hover:text-slate-600'}`} />
               {item.label}
+              {currentView === item.id && (
+                <div className="ml-auto w-1.5 h-1.5 rounded-full bg-blue-600" />
+              )}
             </button>
           ))}
         </nav>
 
         {/* User Profile Section (Bottom Sidebar) */}
-        <div className="p-4 border-t border-slate-100">
-          <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 cursor-pointer transition-colors">
-            <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center overflow-hidden border border-slate-200">
+        <div className="p-6 border-t border-slate-100 bg-slate-50/50">
+          <div className="flex items-center gap-3 p-3 rounded-xl bg-white border border-slate-200 shadow-sm hover:shadow-md transition-all cursor-pointer group">
+            <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center overflow-hidden border-2 border-white shadow-sm">
                <img src="https://ui-avatars.com/api/?name=Sarah+Chen&background=0D8ABC&color=fff" alt="User" />
             </div>
             <div className="flex-1 min-w-0">
-               <p className="text-sm font-semibold text-slate-700 truncate">Dr. Sarah Chen</p>
+               <p className="text-sm font-bold text-slate-700 truncate group-hover:text-blue-700 transition-colors">Dr. Sarah Chen</p>
                <p className="text-xs text-slate-500 truncate">Administrator</p>
             </div>
-            <ChevronDown className="w-4 h-4 text-slate-400" />
+            <ChevronDown className="w-4 h-4 text-slate-400 group-hover:text-slate-600" />
           </div>
         </div>
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
+      <main className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden bg-slate-50 relative">
+        {/* Background Pattern */}
+        <div className="absolute inset-0 opacity-[0.015] pointer-events-none" style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
+        }} />
+
         {/* Top Header */}
-        <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6">
+        <header className="h-20 bg-white/80 backdrop-blur-md border-b border-slate-200/60 flex items-center justify-between px-8 sticky top-0 z-20">
           <div className="flex items-center gap-4">
             <button 
-              className="lg:hidden p-2 -ml-2 text-slate-500 hover:bg-slate-100 rounded-md"
+              className="lg:hidden p-2 -ml-2 text-slate-500 hover:bg-slate-100 rounded-lg transition-colors"
               onClick={() => setSidebarOpen(true)}
             >
               <Menu className="w-6 h-6" />
             </button>
             <div>
-              <h1 className="text-xl font-bold text-slate-800">
-                Environmental Monitoring
+              <h1 className="text-2xl font-bold text-slate-800 tracking-tight">
+                {navItems.find(i => i.id === currentView)?.label || 'Dashboard'}
               </h1>
-              <p className="text-xs text-slate-500 hidden sm:block">Real-time hospital safety dashboard</p>
+              <p className="text-xs text-slate-500 hidden sm:block font-medium mt-0.5">
+                {currentView === 'DASHBOARD' ? 'Real-time hospital safety overview' : 'Manage system preferences'}
+              </p>
             </div>
           </div>
 
           <div className="flex items-center gap-4">
              {/* Operational Status Pill */}
-             <div className={`hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full border ${
+             <div className={`hidden md:flex items-center gap-2.5 px-4 py-2 rounded-full border shadow-sm transition-all duration-300 ${
                isConnected 
-                 ? 'bg-emerald-50 border-emerald-100' 
-                 : 'bg-amber-50 border-amber-100'
+                 ? 'bg-emerald-50/50 border-emerald-200/60 text-emerald-700' 
+                 : 'bg-amber-50/50 border-amber-200/60 text-amber-700'
              }`}>
                 <span className="relative flex h-2.5 w-2.5">
                   <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
@@ -287,24 +298,21 @@ const App: React.FC = () => {
                     isConnected ? 'bg-emerald-500' : 'bg-amber-500'
                   }`}></span>
                 </span>
-                <span className={`text-xs font-semibold ${
-                  isConnected ? 'text-emerald-700' : 'text-amber-700'
-                }`}>
-                  {isConnected ? 'ESP32 Connected' : 'Waiting for ESP32...'}
+                <span className="text-xs font-bold tracking-wide">
+                  {isConnected ? 'SYSTEM ONLINE' : 'WAITING FOR SIGNAL'}
                 </span>
              </div>
 
              <div className="h-8 w-px bg-slate-200 mx-2 hidden md:block"></div>
 
-             <button className="text-slate-400 hover:text-slate-600 transition-colors">
+             <button className="w-10 h-10 flex items-center justify-center rounded-full text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-all">
                <Search className="w-5 h-5" />
              </button>
 
-            <button className="relative text-slate-400 hover:text-slate-600 transition-colors">
+            <button className="relative w-10 h-10 flex items-center justify-center rounded-full text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-all">
               <Bell className="w-5 h-5" />
               {alerts.filter(a => !a.acknowledged).length > 0 && (
-                <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] text-white font-bold border-2 border-white">
-                   {alerts.filter(a => !a.acknowledged).length}
+                <span className="absolute top-2 right-2 flex h-3 w-3 items-center justify-center rounded-full bg-red-500 ring-2 ring-white">
                 </span>
               )}
             </button>
@@ -312,58 +320,65 @@ const App: React.FC = () => {
         </header>
 
         {/* Scrollable Content Area */}
-        <div className="flex-1 overflow-auto bg-slate-50/50 p-4 sm:p-6 lg:p-8">
-           {currentView === 'DASHBOARD' && (
-              <Dashboard 
-                configs={SENSOR_CONFIGS} 
-                readings={readings} 
-                alerts={alerts} 
-              />
-           )}
-           {currentView === 'SENSORS' && (
-              <SensorsView configs={SENSOR_CONFIGS} readings={readings} />
-           )}
-           {currentView === 'ALERTS' && (
-              <AlertsView alerts={alerts} onDismiss={dismissAlert} />
-           )}
-           {currentView === 'AI_ANALYSIS' && (
-              <AIAnalysis readings={readings} alerts={alerts} />
-           )}
-           {currentView === 'ANALYTICS' && (
-              <AnalyticsView configs={SENSOR_CONFIGS} readings={readings} alerts={alerts} />
-           )}
-           {currentView === 'SETTINGS' && (
-              <SettingsView configs={SENSOR_CONFIGS} isConnected={isConnected} />
-           )}
+        <div className="flex-1 overflow-auto p-4 sm:p-6 lg:p-8 relative z-10">
+           <div className="max-w-7xl mx-auto space-y-6 animate-fade-in">
+             {currentView === 'DASHBOARD' && (
+                <Dashboard 
+                  configs={SENSOR_CONFIGS} 
+                  readings={readings} 
+                  alerts={alerts} 
+                />
+             )}
+             {currentView === 'SENSORS' && (
+                <SensorsView configs={SENSOR_CONFIGS} readings={readings} />
+             )}
+             {currentView === 'ALERTS' && (
+                <AlertsView alerts={alerts} onDismiss={dismissAlert} />
+             )}
+             {currentView === 'AI_ANALYSIS' && (
+                <AIAnalysis readings={readings} alerts={alerts} />
+             )}
+             {currentView === 'ANALYTICS' && (
+                <AnalyticsView configs={SENSOR_CONFIGS} readings={readings} alerts={alerts} />
+             )}
+             {currentView === 'SETTINGS' && (
+                <SettingsView configs={SENSOR_CONFIGS} isConnected={isConnected} />
+             )}
+           </div>
         </div>
         
         {/* Help Bubble (Visual only) */}
-        <button className="fixed bottom-6 right-6 bg-blue-600 hover:bg-blue-700 text-white rounded-full p-3 shadow-lg transition-transform hover:scale-105 flex items-center gap-2 pr-5">
-           <HelpCircle className="w-5 h-5" />
-           <span className="text-sm font-semibold">Help</span>
+        <button className="fixed bottom-8 right-8 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-full p-4 shadow-xl shadow-blue-600/30 transition-all hover:scale-110 hover:-translate-y-1 z-40 group">
+           <HelpCircle className="w-6 h-6" />
+           <span className="absolute right-full mr-4 top-1/2 -translate-y-1/2 px-3 py-1.5 bg-slate-800 text-white text-xs font-bold rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+             Need Help?
+           </span>
         </button>
 
         {/* Critical Alerts Toast (Bottom Center for better visibility) */}
         {alerts.filter(a => !a.acknowledged && a.severity === 'CRITICAL').length > 0 && (
-          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 animate-slide-up w-full max-w-lg px-4">
-             <div className="bg-red-600 text-white p-4 rounded-xl shadow-2xl flex items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
-                   <div className="p-2 bg-white/20 rounded-lg">
-                      <Activity className="w-6 h-6 animate-pulse" />
+          <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 animate-slide-up w-full max-w-2xl px-4">
+             <div className="bg-white border-l-4 border-red-500 p-1 rounded-xl shadow-2xl flex items-center justify-between gap-4 overflow-hidden">
+                <div className="absolute inset-0 bg-red-50/50 -z-10" />
+                <div className="flex items-center gap-4 p-4">
+                   <div className="p-3 bg-red-100 text-red-600 rounded-lg animate-pulse">
+                      <Activity className="w-6 h-6" />
                    </div>
                    <div>
-                      <p className="font-bold">Critical Alert Active</p>
-                      <p className="text-sm text-red-100">
+                      <p className="font-bold text-slate-800 text-lg">Critical Alert Active</p>
+                      <p className="text-sm text-slate-600 font-medium">
                         {alerts.filter(a => !a.acknowledged && a.severity === 'CRITICAL')[0].message}
                       </p>
                    </div>
                 </div>
-                <button 
-                  onClick={() => dismissAlert(alerts.filter(a => !a.acknowledged && a.severity === 'CRITICAL')[0].id)}
-                  className="bg-white text-red-600 px-3 py-1.5 rounded-lg text-sm font-bold whitespace-nowrap hover:bg-red-50"
-                >
-                  Dismiss
-                </button>
+                <div className="pr-4">
+                  <button 
+                    onClick={() => dismissAlert(alerts.filter(a => !a.acknowledged && a.severity === 'CRITICAL')[0].id)}
+                    className="bg-red-600 text-white px-5 py-2.5 rounded-lg text-sm font-bold whitespace-nowrap hover:bg-red-700 shadow-lg shadow-red-500/30 transition-all active:scale-95"
+                  >
+                    Dismiss Alert
+                  </button>
+                </div>
              </div>
           </div>
         )}

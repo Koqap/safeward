@@ -68,17 +68,19 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({ configs, readings,
     const values = Object.values(data) as number[];
     const maxValue = Math.max(...values, 1);
     return (
-      <div className="space-y-2">
+      <div className="space-y-4">
         {Object.entries(data).map(([label, value]) => (
-          <div key={label} className="flex items-center gap-3">
-            <span className="text-sm text-slate-600 w-20">{label}</span>
-            <div className="flex-1 bg-slate-100 rounded-full h-4 overflow-hidden">
+          <div key={label} className="flex items-center gap-4 group">
+            <span className="text-sm font-medium text-slate-600 w-24 truncate">{label}</span>
+            <div className="flex-1 bg-slate-100 rounded-full h-3 overflow-hidden shadow-inner">
               <div 
-                className={`h-full ${color} rounded-full transition-all duration-500`}
+                className={`h-full ${color} rounded-full transition-all duration-1000 ease-out group-hover:brightness-110 relative overflow-hidden`}
                 style={{ width: `${((value as number) / maxValue) * 100}%` }}
-              />
+              >
+                <div className="absolute inset-0 bg-white/20 animate-pulse-slow" />
+              </div>
             </div>
-            <span className="text-sm font-semibold text-slate-700 w-8 text-right">{value}</span>
+            <span className="text-sm font-bold text-slate-700 w-8 text-right">{value}</span>
           </div>
         ))}
       </div>
@@ -94,157 +96,177 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({ configs, readings,
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-white rounded-xl border border-slate-200 p-5">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="p-2 bg-blue-100 rounded-lg text-blue-600">
-              <BarChart2 className="w-5 h-5" />
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+        <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm hover:shadow-md transition-all group">
+          <div className="flex items-center gap-4 mb-4">
+            <div className="p-3 bg-blue-50 rounded-xl text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors shadow-sm">
+              <BarChart2 className="w-6 h-6" />
             </div>
-            <span className="text-sm font-medium text-slate-500">Total Alerts</span>
+            <span className="text-sm font-bold text-slate-500 uppercase tracking-wide">Total Alerts</span>
           </div>
-          <p className="text-3xl font-bold text-slate-800">{stats.total}</p>
+          <p className="text-4xl font-black text-slate-800 tracking-tight">{stats.total}</p>
         </div>
 
-        <div className="bg-white rounded-xl border border-slate-200 p-5">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="p-2 bg-red-100 rounded-lg text-red-600">
-              <AlertTriangle className="w-5 h-5" />
+        <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm hover:shadow-md transition-all group">
+          <div className="flex items-center gap-4 mb-4">
+            <div className="p-3 bg-red-50 rounded-xl text-red-600 group-hover:bg-red-600 group-hover:text-white transition-colors shadow-sm">
+              <AlertTriangle className="w-6 h-6" />
             </div>
-            <span className="text-sm font-medium text-slate-500">Critical</span>
+            <span className="text-sm font-bold text-slate-500 uppercase tracking-wide">Critical</span>
           </div>
-          <p className="text-3xl font-bold text-red-600">{stats.critical}</p>
+          <p className="text-4xl font-black text-red-600 tracking-tight">{stats.critical}</p>
         </div>
 
-        <div className="bg-white rounded-xl border border-slate-200 p-5">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="p-2 bg-amber-100 rounded-lg text-amber-600">
-              <Activity className="w-5 h-5" />
+        <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm hover:shadow-md transition-all group">
+          <div className="flex items-center gap-4 mb-4">
+            <div className="p-3 bg-amber-50 rounded-xl text-amber-600 group-hover:bg-amber-600 group-hover:text-white transition-colors shadow-sm">
+              <Activity className="w-6 h-6" />
             </div>
-            <span className="text-sm font-medium text-slate-500">Warnings</span>
+            <span className="text-sm font-bold text-slate-500 uppercase tracking-wide">Warnings</span>
           </div>
-          <p className="text-3xl font-bold text-amber-600">{stats.warning}</p>
+          <p className="text-4xl font-black text-amber-600 tracking-tight">{stats.warning}</p>
         </div>
 
-        <div className="bg-white rounded-xl border border-slate-200 p-5">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="p-2 bg-emerald-100 rounded-lg text-emerald-600">
-              <TrendingUp className="w-5 h-5" />
+        <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm hover:shadow-md transition-all group">
+          <div className="flex items-center gap-4 mb-4">
+            <div className="p-3 bg-emerald-50 rounded-xl text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white transition-colors shadow-sm">
+              <TrendingUp className="w-6 h-6" />
             </div>
-            <span className="text-sm font-medium text-slate-500">Data Points</span>
+            <span className="text-sm font-bold text-slate-500 uppercase tracking-wide">Data Points</span>
           </div>
-          <p className="text-3xl font-bold text-slate-800">{stats.totalReadings}</p>
+          <p className="text-4xl font-black text-slate-800 tracking-tight">{stats.totalReadings}</p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Alerts by Type */}
-        <div className="bg-white rounded-xl border border-slate-200 p-6">
-          <h3 className="text-lg font-bold text-slate-800 mb-4">Alerts by Sensor Type</h3>
+        <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+          <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
+            <AlertTriangle className="w-5 h-5 text-slate-400" />
+            Alerts by Sensor Type
+          </h3>
           <div className="space-y-4">
-            <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
-              <div className="flex items-center gap-3">
-                <Wind className="w-5 h-5 text-purple-600" />
-                <span className="font-medium text-slate-700">Methane (MQ-5)</span>
+            <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl hover:bg-slate-100 transition-colors">
+              <div className="flex items-center gap-4">
+                <div className="p-2 bg-white rounded-lg shadow-sm">
+                  <Wind className="w-5 h-5 text-purple-600" />
+                </div>
+                <span className="font-bold text-slate-700">Methane (MQ-5)</span>
               </div>
-              <span className="text-lg font-bold text-purple-600">{stats.byType.methane}</span>
+              <span className="text-xl font-black text-purple-600">{stats.byType.methane}</span>
             </div>
-            <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
-              <div className="flex items-center gap-3">
-                <Thermometer className="w-5 h-5 text-orange-600" />
-                <span className="font-medium text-slate-700">Temperature</span>
+            <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl hover:bg-slate-100 transition-colors">
+              <div className="flex items-center gap-4">
+                <div className="p-2 bg-white rounded-lg shadow-sm">
+                  <Thermometer className="w-5 h-5 text-orange-600" />
+                </div>
+                <span className="font-bold text-slate-700">Temperature</span>
               </div>
-              <span className="text-lg font-bold text-orange-600">{stats.byType.temperature}</span>
+              <span className="text-xl font-black text-orange-600">{stats.byType.temperature}</span>
             </div>
-            <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
-              <div className="flex items-center gap-3">
-                <Droplets className="w-5 h-5 text-blue-600" />
-                <span className="font-medium text-slate-700">Humidity</span>
+            <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl hover:bg-slate-100 transition-colors">
+              <div className="flex items-center gap-4">
+                <div className="p-2 bg-white rounded-lg shadow-sm">
+                  <Droplets className="w-5 h-5 text-blue-600" />
+                </div>
+                <span className="font-bold text-slate-700">Humidity</span>
               </div>
-              <span className="text-lg font-bold text-blue-600">{stats.byType.humidity}</span>
+              <span className="text-xl font-black text-blue-600">{stats.byType.humidity}</span>
             </div>
           </div>
         </div>
 
         {/* Alerts by Location */}
-        <div className="bg-white rounded-xl border border-slate-200 p-6">
-          <h3 className="text-lg font-bold text-slate-800 mb-4">Alerts by Location</h3>
+        <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+          <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
+            <Activity className="w-5 h-5 text-slate-400" />
+            Alerts by Location
+          </h3>
           {Object.keys(stats.byLocation).length > 0 ? (
-            <BarChart data={stats.byLocation} color="bg-indigo-500" />
+            <div className="mt-8">
+              <BarChart data={stats.byLocation} color="bg-indigo-500" />
+            </div>
           ) : (
-            <div className="text-center py-8 text-slate-400">
-              <Clock className="w-10 h-10 mx-auto mb-2 opacity-50" />
-              <p>No alert data yet</p>
+            <div className="text-center py-12 text-slate-400 bg-slate-50 rounded-xl border border-dashed border-slate-200">
+              <Clock className="w-12 h-12 mx-auto mb-3 opacity-50" />
+              <p className="font-medium">No alert data recorded yet</p>
             </div>
           )}
         </div>
       </div>
 
       {/* Sensor Reading Statistics */}
-      <div className="bg-white rounded-xl border border-slate-200 p-6">
-        <h3 className="text-lg font-bold text-slate-800 mb-4">Sensor Reading Statistics</h3>
+      <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+        <h3 className="text-lg font-bold text-slate-800 mb-6">Sensor Reading Statistics</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Methane Stats */}
-          <div className="p-4 bg-purple-50 rounded-xl border border-purple-100">
-            <div className="flex items-center gap-2 mb-3">
-              <Wind className="w-5 h-5 text-purple-600" />
-              <span className="font-semibold text-purple-800">Methane (ppm)</span>
+          <div className="p-5 bg-purple-50/50 rounded-2xl border border-purple-100 hover:shadow-md transition-all group">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2 bg-purple-100 rounded-lg text-purple-600 group-hover:bg-purple-600 group-hover:text-white transition-colors">
+                <Wind className="w-5 h-5" />
+              </div>
+              <span className="font-bold text-purple-900">Methane (ppm)</span>
             </div>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-slate-600">Average</span>
-                <span className="font-bold text-purple-700">{stats.readings.methane.avg.toFixed(1)}</span>
+            <div className="space-y-3 text-sm">
+              <div className="flex justify-between items-center p-2 bg-white/60 rounded-lg">
+                <span className="text-slate-600 font-medium">Average</span>
+                <span className="font-bold text-purple-700 text-lg">{stats.readings.methane.avg.toFixed(1)}</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-slate-600">Maximum</span>
-                <span className="font-bold text-purple-700">{stats.readings.methane.max.toFixed(1)}</span>
+              <div className="flex justify-between items-center p-2 bg-white/60 rounded-lg">
+                <span className="text-slate-600 font-medium">Maximum</span>
+                <span className="font-bold text-purple-700 text-lg">{stats.readings.methane.max.toFixed(1)}</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-slate-600">Minimum</span>
-                <span className="font-bold text-purple-700">{stats.readings.methane.min.toFixed(1)}</span>
+              <div className="flex justify-between items-center p-2 bg-white/60 rounded-lg">
+                <span className="text-slate-600 font-medium">Minimum</span>
+                <span className="font-bold text-purple-700 text-lg">{stats.readings.methane.min.toFixed(1)}</span>
               </div>
             </div>
           </div>
 
           {/* Temperature Stats */}
-          <div className="p-4 bg-orange-50 rounded-xl border border-orange-100">
-            <div className="flex items-center gap-2 mb-3">
-              <Thermometer className="w-5 h-5 text-orange-600" />
-              <span className="font-semibold text-orange-800">Temperature (°C)</span>
+          <div className="p-5 bg-orange-50/50 rounded-2xl border border-orange-100 hover:shadow-md transition-all group">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2 bg-orange-100 rounded-lg text-orange-600 group-hover:bg-orange-600 group-hover:text-white transition-colors">
+                <Thermometer className="w-5 h-5" />
+              </div>
+              <span className="font-bold text-orange-900">Temperature (°C)</span>
             </div>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-slate-600">Average</span>
-                <span className="font-bold text-orange-700">{stats.readings.temperature.avg.toFixed(1)}</span>
+            <div className="space-y-3 text-sm">
+              <div className="flex justify-between items-center p-2 bg-white/60 rounded-lg">
+                <span className="text-slate-600 font-medium">Average</span>
+                <span className="font-bold text-orange-700 text-lg">{stats.readings.temperature.avg.toFixed(1)}</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-slate-600">Maximum</span>
-                <span className="font-bold text-orange-700">{stats.readings.temperature.max.toFixed(1)}</span>
+              <div className="flex justify-between items-center p-2 bg-white/60 rounded-lg">
+                <span className="text-slate-600 font-medium">Maximum</span>
+                <span className="font-bold text-orange-700 text-lg">{stats.readings.temperature.max.toFixed(1)}</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-slate-600">Minimum</span>
-                <span className="font-bold text-orange-700">{stats.readings.temperature.min.toFixed(1)}</span>
+              <div className="flex justify-between items-center p-2 bg-white/60 rounded-lg">
+                <span className="text-slate-600 font-medium">Minimum</span>
+                <span className="font-bold text-orange-700 text-lg">{stats.readings.temperature.min.toFixed(1)}</span>
               </div>
             </div>
           </div>
 
           {/* Humidity Stats */}
-          <div className="p-4 bg-blue-50 rounded-xl border border-blue-100">
-            <div className="flex items-center gap-2 mb-3">
-              <Droplets className="w-5 h-5 text-blue-600" />
-              <span className="font-semibold text-blue-800">Humidity (%)</span>
+          <div className="p-5 bg-blue-50/50 rounded-2xl border border-blue-100 hover:shadow-md transition-all group">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2 bg-blue-100 rounded-lg text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                <Droplets className="w-5 h-5" />
+              </div>
+              <span className="font-bold text-blue-900">Humidity (%)</span>
             </div>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-slate-600">Average</span>
-                <span className="font-bold text-blue-700">{stats.readings.humidity.avg.toFixed(1)}</span>
+            <div className="space-y-3 text-sm">
+              <div className="flex justify-between items-center p-2 bg-white/60 rounded-lg">
+                <span className="text-slate-600 font-medium">Average</span>
+                <span className="font-bold text-blue-700 text-lg">{stats.readings.humidity.avg.toFixed(1)}</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-slate-600">Maximum</span>
-                <span className="font-bold text-blue-700">{stats.readings.humidity.max.toFixed(1)}</span>
+              <div className="flex justify-between items-center p-2 bg-white/60 rounded-lg">
+                <span className="text-slate-600 font-medium">Maximum</span>
+                <span className="font-bold text-blue-700 text-lg">{stats.readings.humidity.max.toFixed(1)}</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-slate-600">Minimum</span>
-                <span className="font-bold text-blue-700">{stats.readings.humidity.min.toFixed(1)}</span>
+              <div className="flex justify-between items-center p-2 bg-white/60 rounded-lg">
+                <span className="text-slate-600 font-medium">Minimum</span>
+                <span className="font-bold text-blue-700 text-lg">{stats.readings.humidity.min.toFixed(1)}</span>
               </div>
             </div>
           </div>
