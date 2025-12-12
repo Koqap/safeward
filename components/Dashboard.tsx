@@ -130,24 +130,27 @@ const StatusCard: React.FC<{
   label: string;
   subLabel: string;
   countStr: string;
-  status: 'Online' | 'Active' | 'Offline';
-}> = ({ icon: Icon, label, subLabel, countStr, status }) => (
-  <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-4 flex items-center justify-between mb-3">
-     <div className="flex items-center gap-3">
-        <div className="bg-emerald-500 p-2 rounded-lg text-white">
-           <Icon className="w-5 h-5" />
-        </div>
-        <div>
-           <p className="font-bold text-slate-800 text-sm">{label}</p>
-           <p className="text-xs text-slate-500">{subLabel}</p>
-        </div>
-     </div>
-     <div className="text-right">
-        <p className="text-lg font-bold text-emerald-700 leading-tight">{countStr}</p>
-        <p className="text-[10px] text-emerald-600 font-medium">{status}</p>
-     </div>
-  </div>
-);
+  status: 'Online' | 'Active' | 'Offline' | 'Waiting';
+}> = ({ icon: Icon, label, subLabel, countStr, status }) => {
+  const isOnline = status === 'Online' || status === 'Active';
+  return (
+    <div className={`${isOnline ? 'bg-emerald-50 border-emerald-100' : 'bg-slate-50 border-slate-200'} border rounded-xl p-4 flex items-center justify-between mb-3`}>
+       <div className="flex items-center gap-3">
+          <div className={`${isOnline ? 'bg-emerald-500' : 'bg-slate-400'} p-2 rounded-lg text-white`}>
+             <Icon className="w-5 h-5" />
+          </div>
+          <div>
+             <p className="font-bold text-slate-800 text-sm">{label}</p>
+             <p className="text-xs text-slate-500">{subLabel}</p>
+          </div>
+       </div>
+       <div className="text-right">
+          <p className={`text-lg font-bold ${isOnline ? 'text-emerald-700' : 'text-slate-500'} leading-tight`}>{countStr}</p>
+          <p className={`text-[10px] ${isOnline ? 'text-emerald-600' : 'text-slate-400'} font-medium`}>{status}</p>
+       </div>
+    </div>
+  );
+};
 
 export const Dashboard: React.FC<DashboardProps> = ({ configs, readings, alerts }) => {
   // Get latest readings for all sensors
@@ -159,6 +162,43 @@ export const Dashboard: React.FC<DashboardProps> = ({ configs, readings, alerts 
     });
     return latest;
   }, [readings, configs]);
+
+  // Calculate actual sensor status from readings
+  const sensorStatus = useMemo(() => {
+    const hasData = readings.length > 0;
+    const methaneConfigs = configs.filter(c => c.type === 'METHANE');
+    const tempHumConfigs = configs.filter(c => c.type === 'TEMPERATURE' || c.type === 'HUMIDITY');
+    const locations = [...new Set(configs.map(c => c.location))];
+    
+    // Count how many sensors have recent readings (within last 30 seconds)
+    const now = Date.now();
+    const recentThreshold = 30000; // 30 seconds
+    
+    const onlineMethane = methaneConfigs.filter(c => {
+      const reading = readings.filter(r => r.id === c.id).pop();
+      return reading && (now - reading.timestamp) < recentThreshold;
+    }).length;
+    
+    const onlineTempHum = tempHumConfigs.filter(c => {
+      const reading = readings.filter(r => r.id === c.id).pop();
+      return reading && (now - reading.timestamp) < recentThreshold;
+    }).length;
+    
+    const activeLocations = locations.filter(loc => {
+      const locConfigs = configs.filter(c => c.location === loc);
+      return locConfigs.some(c => {
+        const reading = readings.filter(r => r.id === c.id).pop();
+        return reading && (now - reading.timestamp) < recentThreshold;
+      });
+    }).length;
+    
+    return {
+      hasData,
+      methane: { online: onlineMethane, total: methaneConfigs.length },
+      tempHum: { online: onlineTempHum, total: tempHumConfigs.length },
+      esp32: { online: activeLocations, total: locations.length }
+    };
+  }, [configs, readings]);
 
   // Group configurations by Ward/Location
   const groupedConfigs = useMemo(() => getGroupedConfigs(configs), [configs]);
@@ -238,26 +278,26 @@ export const Dashboard: React.FC<DashboardProps> = ({ configs, readings, alerts 
              <p className="text-xs text-slate-500 mb-4">Active monitoring devices</p>
              
              <StatusCard 
-               icon={Wind} 
-               label="MQ-5 Sensors" 
-               subLabel="Methane Detection" 
-               countStr="3/3" 
-               status="Online" 
-             />
-             <StatusCard 
-               icon={Thermometer} 
-               label="DHT22 Sensors" 
-               subLabel="Temp & Humidity" 
-               countStr="6/6" 
-               status="Online" 
-             />
-             <StatusCard 
-               icon={Cpu} 
-               label="ESP32 Modules" 
-               subLabel="Data Transmission" 
-               countStr="3/3" 
-               status="Active" 
-             />
+                icon={Wind} 
+                label="MQ-5 Sensors" 
+                subLabel="Methane Detection" 
+                countStr={`${sensorStatus.methane.online}/${sensorStatus.methane.total}`} 
+                status={sensorStatus.methane.online > 0 ? 'Online' : 'Waiting'} 
+              />
+              <StatusCard 
+                icon={Thermometer} 
+                label="DHT22 Sensors" 
+                subLabel="Temp & Humidity" 
+                countStr={`${sensorStatus.tempHum.online}/${sensorStatus.tempHum.total}`} 
+                status={sensorStatus.tempHum.online > 0 ? 'Online' : 'Waiting'} 
+              />
+              <StatusCard 
+                icon={Cpu} 
+                label="ESP32 Modules" 
+                subLabel="Data Transmission" 
+                countStr={`${sensorStatus.esp32.online}/${sensorStatus.esp32.total}`} 
+                status={sensorStatus.esp32.online > 0 ? 'Active' : 'Waiting'} 
+              />
              
              <div className="mt-4 pt-4 border-t border-slate-100">
                <div className="flex justify-between items-center text-sm">

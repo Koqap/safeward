@@ -115,9 +115,10 @@ const App: React.FC = () => {
       
       if (response.ok) {
         const data = await response.json();
-        setIsConnected(true);
         
+        // Only set connected if there are actual readings from ESP32
         if (data.readings && data.readings.length > 0) {
+          setIsConnected(true);
           const newReadings = convertApiDataToReadings(data.readings);
           
           setReadings(prev => {
@@ -153,6 +154,9 @@ const App: React.FC = () => {
           });
           
           checkThresholds(latestReadings);
+        } else {
+          // No readings yet - ESP32 hasn't sent data
+          setIsConnected(false);
         }
       } else {
         setIsConnected(false);

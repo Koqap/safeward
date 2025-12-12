@@ -74,7 +74,9 @@ async function sendReading(reading) {
     const response = await fetch(API_URL, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        // Bypass Vercel deployment protection for API access
+        'x-vercel-protection-bypass': process.env.VERCEL_PROTECTION_BYPASS || ''
       },
       body: JSON.stringify(reading)
     });
@@ -83,7 +85,8 @@ async function sendReading(reading) {
       const result = await response.json();
       console.log(`  ✓ ${reading.location}: Methane=${reading.methane}ppm, Temp=${reading.temperature}°C, Humidity=${reading.humidity}%`);
     } else {
-      console.log(`  ✗ ${reading.location}: HTTP ${response.status}`);
+      const errorText = await response.text().catch(() => '');
+      console.log(`  ✗ ${reading.location}: HTTP ${response.status} ${errorText ? `- ${errorText.substring(0, 50)}` : ''}`);
     }
   } catch (error) {
     console.log(`  ✗ ${reading.location}: ${error.message}`);
