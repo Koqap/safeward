@@ -1,10 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-
-// In-memory storage for sensor readings (in production, use a database)
-// This is a simple solution for demo purposes
-declare global {
-  var sensorReadings: SensorData[];
-}
+import { Redis } from '@upstash/redis';
 
 interface SensorData {
   device_id: string;
@@ -15,14 +10,16 @@ interface SensorData {
   timestamp: number;
 }
 
-// Initialize global storage if not exists
-if (!global.sensorReadings) {
-  global.sensorReadings = [];
-}
+// Initialize Redis client (uses UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN env vars)
+const redis = new Redis({
+  url: process.env.UPSTASH_REDIS_REST_URL!,
+  token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+});
 
-const MAX_READINGS = 500; // Keep last 500 readings
+const READINGS_KEY = 'safeward:readings';
+const MAX_READINGS = 500;
 
-export default function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Enable CORS
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -55,13 +52,19 @@ export default function handler(req: VercelRequest, res: VercelResponse) {
         timestamp: data.timestamp || Date.now()
       };
 
-      // Add to storage
-      global.sensorReadings.push(reading);
+      // Get existing readings from Redis
+      let readings: SensorData[] = await redis.get(READINGS_KEY) || [];
+      
+      // Add new reading
+      readings.push(reading);
       
       // Keep only the last MAX_READINGS
-      if (global.sensorReadings.length > MAX_READINGS) {
-        global.sensorReadings = global.sensorReadings.slice(-MAX_READINGS);
+      if (readings.length > MAX_READINGS) {
+        readings = readings.slice(-MAX_READINGS);
       }
+
+      // Store back to Redis
+      await redis.set(READINGS_KEY, readings);
 
       return res.status(200).json({ 
         success: true, 
@@ -70,7 +73,7 @@ export default function handler(req: VercelRequest, res: VercelResponse) {
       });
     } catch (error) {
       console.error('Error processing sensor data:', error);
-      return res.status(500).json({ error: 'Internal server error' });
+      return res.status(500).json({ error: 'Internal server error', details: String(error) });
     }
   }
 
