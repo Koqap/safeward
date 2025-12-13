@@ -364,26 +364,26 @@ const App: React.FC = () => {
 
         {/* Critical Alerts Toast (Bottom Center for better visibility) */}
         {alerts.filter(a => !a.acknowledged && a.severity === 'CRITICAL').length > 0 && (
-          <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 animate-slide-up w-full max-w-2xl px-4">
-             <div className="bg-white border-l-4 border-red-500 p-1 rounded-xl shadow-2xl flex items-center justify-between gap-4 overflow-hidden">
-                <div className="absolute inset-0 bg-red-50/50 -z-10" />
-                <div className="flex items-center gap-4 p-4">
-                   <div className="p-3 bg-red-100 text-red-600 rounded-lg animate-pulse">
-                      <Activity className="w-6 h-6" />
+          <div className="fixed bottom-4 left-4 right-4 md:bottom-8 md:left-1/2 md:-translate-x-1/2 md:w-full md:max-w-2xl z-50 animate-slide-up">
+             <div className="bg-white dark:bg-charcoal border-l-4 border-red-500 rounded-xl shadow-2xl flex flex-col md:flex-row items-stretch md:items-center justify-between overflow-hidden">
+                <div className="absolute inset-0 bg-red-50/50 dark:bg-red-900/10 -z-10" />
+                <div className="flex items-center gap-3 p-3 md:p-4">
+                   <div className="p-2 md:p-3 bg-red-100 text-red-600 dark:bg-red-500/20 dark:text-red-400 rounded-lg animate-pulse shrink-0">
+                      <Activity className="w-5 h-5 md:w-6 md:h-6" />
                    </div>
-                   <div>
-                      <p className="font-bold text-slate-800 text-lg">Critical Alert Active</p>
-                      <p className="text-sm text-slate-600 font-medium">
+                   <div className="min-w-0">
+                      <p className="font-bold text-slate-800 dark:text-white text-sm md:text-lg">Critical Alert Active</p>
+                      <p className="text-xs md:text-sm text-slate-600 dark:text-slate-300 font-medium line-clamp-2">
                         {alerts.filter(a => !a.acknowledged && a.severity === 'CRITICAL')[0].message}
                       </p>
                    </div>
                 </div>
-                <div className="pr-4">
+                <div className="p-3 pt-0 md:p-4 md:pl-0">
                   <button 
                     onClick={() => dismissAlert(alerts.filter(a => !a.acknowledged && a.severity === 'CRITICAL')[0].id)}
-                    className="bg-red-600 text-white px-5 py-2.5 rounded-lg text-sm font-bold whitespace-nowrap hover:bg-red-700 shadow-lg shadow-red-500/30 transition-all active:scale-95"
+                    className="w-full md:w-auto bg-red-600 text-white px-4 py-2 md:px-5 md:py-2.5 rounded-lg text-xs md:text-sm font-bold whitespace-nowrap hover:bg-red-700 shadow-lg shadow-red-500/30 transition-all active:scale-95"
                   >
-                    Dismiss Alert
+                    Dismiss
                   </button>
                 </div>
              </div>
