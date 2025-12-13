@@ -61,9 +61,15 @@ function generateReading(device) {
     console.log(`  🚨 ${device.location}: Simulating CRITICAL level methane`);
   }
   
-  // Temperature variations
   if (Math.random() > 0.95) {
     temperature = 28 + Math.random() * 3; // High temperature
+  }
+
+  // Simulate DHT Error
+  let error = undefined;
+  if (Math.random() > 0.95) {
+    console.log(`  ⚠ ${device.location}: Simulating DHT Read Error`);
+    error = "DHT22 read error";
   }
   
   return {
@@ -72,7 +78,8 @@ function generateReading(device) {
     methane: Math.round(methane * 10) / 10,
     temperature: Math.round(temperature * 10) / 10,
     humidity: Math.round(humidity * 10) / 10,
-    timestamp: Date.now()
+    timestamp: Date.now(),
+    error: error
   };
 }
 

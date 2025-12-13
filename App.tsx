@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { LayoutDashboard, Activity, FileText, Settings, Bell, Menu, X, BarChart2, Shield, Search, HelpCircle, ChevronDown, Sun, Moon } from 'lucide-react';
 import { ViewState, SensorReading, Alert } from './types';
-import { SENSOR_CONFIGS, HISTORY_LIMIT } from './constants';
+import { SENSOR_CONFIGS, HISTORY_LIMIT, OFFLINE_THRESHOLD_MS } from './constants';
 import { Dashboard } from './components/Dashboard';
 import { AIAnalysis } from './components/AIAnalysis';
 import { SensorsView } from './components/SensorsView';
@@ -19,6 +19,7 @@ interface ApiSensorData {
   temperature: number;
   humidity: number;
   timestamp: number;
+  error?: string;
 }
 
 const App: React.FC = () => {
@@ -58,7 +59,8 @@ const App: React.FC = () => {
           value: Number(value.toFixed(1)),
           unit: config.unit,
           timestamp: data.timestamp,
-          location: data.location
+          location: data.location,
+          error: data.error
         });
       });
     });
@@ -132,10 +134,16 @@ const App: React.FC = () => {
       if (response.ok) {
         const data = await response.json();
         
-        // Only set connected if there are actual readings from ESP32
+        // Only set connected if there are actual readings from ESP32 AND they are recent
         if (data.readings && data.readings.length > 0) {
-          setIsConnected(true);
           const newReadings = convertApiDataToReadings(data.readings);
+          
+          // Check if the latest reading is recent enough
+          const latestReading = newReadings.sort((a, b) => b.timestamp - a.timestamp)[0];
+          const now = Date.now();
+          const isRecent = latestReading && (now - latestReading.timestamp < OFFLINE_THRESHOLD_MS);
+
+          setIsConnected(!!isRecent);
           
           setReadings(prev => {
             const next = [...prev, ...newReadings];
@@ -299,7 +307,7 @@ const App: React.FC = () => {
                   }`}></span>
                 </span>
                 <span className="text-xs font-bold tracking-wide">
-                  {isConnected ? 'SYSTEM ONLINE' : 'WAITING FOR SIGNAL'}
+                  {isConnected ? 'SYSTEM ONLINE' : 'SYSTEM OFFLINE'}
                 </span>
              </div>
 

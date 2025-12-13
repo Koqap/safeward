@@ -57,9 +57,13 @@ const WardRow: React.FC<{
   const isOffline = (now - lastTimestamp) > 15000;
 
   // Determine container styling based on worst state
+  const hasError = methane?.data?.error || temp?.data?.error || hum?.data?.error;
+  
   const statusColor = isOffline
     ? 'dark:bg-charcoal/50 dark:border-white/5 bg-slate-50 border-slate-200 opacity-75 grayscale-[0.5]'
-    : isCritical 
+    : hasError
+      ? 'dark:bg-red-900/10 dark:border-red-500/50 bg-red-50 border-red-200'
+      : isCritical 
       ? 'dark:bg-red-900/10 dark:border-neon-red/50 dark:shadow-[0_0_15px_rgba(255,0,60,0.2)] bg-red-50 border-red-200' 
       : isWarning 
         ? 'dark:bg-amber-900/10 dark:border-neon-amber/50 bg-amber-50 border-amber-200' 
@@ -67,6 +71,8 @@ const WardRow: React.FC<{
 
   const decorativeBarColor = isOffline
     ? 'bg-slate-400 dark:bg-slate-600'
+    : hasError
+      ? 'bg-red-500'
     : isCritical
       ? 'bg-neon-red shadow-[0_0_10px_#ff003c]'
       : isWarning
@@ -88,8 +94,8 @@ const WardRow: React.FC<{
         {/* Header Section */}
         <div className="flex-shrink-0 min-w-[220px]">
           <div className="flex items-center gap-4">
-             <div className={`p-3 rounded-xl shadow-sm ${isOffline ? 'bg-slate-100 text-slate-500 dark:bg-white/5 dark:text-slate-400' : isCritical ? 'bg-red-100 text-red-600 dark:bg-red-500/20 dark:text-neon-red' : isWarning ? 'bg-amber-100 text-amber-600 dark:bg-amber-500/20 dark:text-neon-amber' : 'bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-neon-green'}`}>
-                {isOffline ? <Radio className="w-8 h-8" /> : isCritical ? <Siren className="w-8 h-8 animate-pulse" /> : isWarning ? <Wind className="w-8 h-8" /> : <Activity className="w-8 h-8" />}
+             <div className={`p-3 rounded-xl shadow-sm ${isOffline ? 'bg-slate-100 text-slate-500 dark:bg-white/5 dark:text-slate-400' : hasError ? 'bg-red-100 text-red-600 dark:bg-red-500/20 dark:text-red-400' : isCritical ? 'bg-red-100 text-red-600 dark:bg-red-500/20 dark:text-neon-red' : isWarning ? 'bg-amber-100 text-amber-600 dark:bg-amber-500/20 dark:text-neon-amber' : 'bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-neon-green'}`}>
+                {isOffline ? <Radio className="w-8 h-8" /> : hasError ? <AlertTriangle className="w-8 h-8" /> : isCritical ? <Siren className="w-8 h-8 animate-pulse" /> : isWarning ? <Wind className="w-8 h-8" /> : <Activity className="w-8 h-8" />}
              </div>
              <div>
                <h3 className="font-bold text-slate-800 dark:text-white text-xl tracking-tight">{location}</h3>
@@ -158,8 +164,8 @@ const WardRow: React.FC<{
         {/* Status Pill & Action */}
         <div className="self-start md:self-center flex flex-col items-end gap-3">
           <span className={`px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wide shadow-sm
-            ${isOffline ? 'bg-slate-100 text-slate-600 ring-1 ring-slate-200 dark:bg-white/5 dark:text-slate-400 dark:ring-white/10' : isCritical ? 'bg-red-100 text-red-700 animate-pulse ring-2 ring-red-200 dark:bg-red-500/20 dark:text-neon-red dark:ring-neon-red/50 dark:shadow-[0_0_10px_rgba(255,0,60,0.4)]' : isWarning ? 'bg-amber-100 text-amber-700 ring-1 ring-amber-200 dark:bg-amber-500/20 dark:text-neon-amber dark:ring-neon-amber/50' : 'bg-emerald-100 text-emerald-700 ring-1 ring-emerald-200 dark:bg-emerald-500/20 dark:text-neon-green dark:ring-neon-green/50'}`}>
-            {isOffline ? 'OFFLINE' : isCritical ? 'CRITICAL LEAK' : isWarning ? 'Warning' : 'Safe'}
+            ${isOffline ? 'bg-slate-100 text-slate-600 ring-1 ring-slate-200 dark:bg-white/5 dark:text-slate-400 dark:ring-white/10' : hasError ? 'bg-red-100 text-red-700 ring-1 ring-red-200 dark:bg-red-500/20 dark:text-red-400 dark:ring-red-500/50' : isCritical ? 'bg-red-100 text-red-700 animate-pulse ring-2 ring-red-200 dark:bg-red-500/20 dark:text-neon-red dark:ring-neon-red/50 dark:shadow-[0_0_10px_rgba(255,0,60,0.4)]' : isWarning ? 'bg-amber-100 text-amber-700 ring-1 ring-amber-200 dark:bg-amber-500/20 dark:text-neon-amber dark:ring-neon-amber/50' : 'bg-emerald-100 text-emerald-700 ring-1 ring-emerald-200 dark:bg-emerald-500/20 dark:text-neon-green dark:ring-neon-green/50'}`}>
+            {isOffline ? 'OFFLINE' : hasError ? 'SENSOR ERROR' : isCritical ? 'CRITICAL LEAK' : isWarning ? 'Warning' : 'Safe'}
           </span>
           
           <button className="opacity-0 group-hover:opacity-100 transition-all duration-200 transform translate-x-2 group-hover:translate-x-0 text-xs font-bold text-blue-600 dark:text-neon-blue hover:text-blue-800 dark:hover:text-cyan-300 flex items-center gap-1">

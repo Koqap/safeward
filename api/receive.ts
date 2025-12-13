@@ -8,6 +8,7 @@ interface SensorData {
   temperature: number;
   humidity: number;
   timestamp: number;
+  error?: string;
 }
 
 // Initialize Redis client (uses Vercel's Upstash integration env vars)
@@ -34,22 +35,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     try {
       const data = req.body as SensorData;
       
-      // Validate required fields
-      if (typeof data.methane !== 'number' || 
+      // Validate required fields (unless it's an error report)
+      if (!data.error && (typeof data.methane !== 'number' || 
           typeof data.temperature !== 'number' || 
-          typeof data.humidity !== 'number') {
+          typeof data.humidity !== 'number')) {
         return res.status(400).json({ 
-          error: 'Invalid data format. Required: methane, temperature, humidity (numbers)' 
+          error: 'Invalid data format. Required: methane, temperature, humidity (numbers) OR error message' 
         });
       }
 
       const reading: SensorData = {
         device_id: data.device_id || 'esp32-001',
         location: data.location || 'Ward A',
-        methane: data.methane,
-        temperature: data.temperature,
-        humidity: data.humidity,
-        timestamp: data.timestamp || Date.now()
+        methane: data.methane || 0,
+        temperature: data.temperature || 0,
+        humidity: data.humidity || 0,
+        timestamp: data.timestamp || Date.now(),
+        error: data.error
       };
 
       // Get existing readings from Redis

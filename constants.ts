@@ -92,3 +92,4 @@ export const SENSOR_CONFIGS: SensorConfig[] = [
 ];
 
 export const HISTORY_LIMIT = 100; // Keep last 100 readings for charts
+export const OFFLINE_THRESHOLD_MS = 10000; // 10 seconds without data = OFFLINE

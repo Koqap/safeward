@@ -24,11 +24,11 @@
 
 // ============ CONFIGURATION ============
 // WiFi Credentials - CHANGE THESE
-const char* WIFI_SSID = "YOUR_WIFI_SSID";
-const char* WIFI_PASSWORD = "YOUR_WIFI_PASSWORD";
+const char* WIFI_SSID = "PLDTHOMEFIBR4TXcT";
+const char* WIFI_PASSWORD = "c@binaB2025";
 
 // Vercel API Endpoint - CHANGE THIS to your Vercel deployment URL
-const char* API_ENDPOINT = "https://your-safeward-app.vercel.app/api/receive";
+const char* API_ENDPOINT = "https://safeward-jcov.vercel.app/api/receive";
 
 // Device Configuration
 const char* DEVICE_ID = "esp32-001";
@@ -58,6 +58,7 @@ unsigned long lastSendTime = 0;
 float lastMethane = 0;
 float lastTemperature = 0;
 float lastHumidity = 0;
+String lastError = "";
 
 void setup() {
   Serial.begin(115200);
@@ -129,8 +130,11 @@ void readSensors() {
   // Check for DHT read errors
   if (isnan(lastHumidity) || isnan(lastTemperature)) {
     Serial.println("⚠ DHT22 read error!");
+    lastError = "DHT22 read error";
     lastHumidity = 0;
     lastTemperature = 0;
+  } else {
+    lastError = "";
   }
   
   // Print readings to Serial Monitor
@@ -192,6 +196,9 @@ void sendDataToAPI() {
   doc["methane"] = lastMethane;
   doc["temperature"] = lastTemperature;
   doc["humidity"] = lastHumidity;
+  if (lastError != "") {
+    doc["error"] = lastError;
+  }
   doc["timestamp"] = millis();  // Note: In production, use NTP for real timestamps
   
   String jsonPayload;

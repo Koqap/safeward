@@ -53,6 +53,10 @@ const SensorRow = ({ config, reading, status }: { config: SensorConfig, reading:
             <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-neon-amber">
               <AlertTriangle className="w-2.5 h-2.5" /> Warn
             </span>
+          ) : status === 'error' ? (
+            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400">
+              <AlertTriangle className="w-2.5 h-2.5" /> Error
+            </span>
           ) : (
             <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-neon-red">
               <AlertTriangle className="w-2.5 h-2.5" /> Crit
@@ -81,6 +85,8 @@ export const SensorsView: React.FC<SensorsViewProps> = ({ configs, readings }) =
     
     // Check if data is stale (> 15 seconds)
     if (currentTime - reading.timestamp > 15000) return 'offline';
+
+    if (reading.error) return 'error';
 
     if (config.type === 'METHANE') {
        if (reading.value > config.warningThreshold * 1.2) return 'critical';
@@ -118,6 +124,7 @@ export const SensorsView: React.FC<SensorsViewProps> = ({ configs, readings }) =
             const reading = getLatestReading(config.id);
             const status = getStatus(reading, config);
             if (status === 'critical') return 'critical';
+            if (status === 'error') return 'error';
             if (status === 'warning' && acc !== 'critical') return 'warning';
             if (status === 'offline' && acc === 'safe') return 'offline'; // Only override safe
             return acc;
@@ -125,6 +132,7 @@ export const SensorsView: React.FC<SensorsViewProps> = ({ configs, readings }) =
 
           const statusColor = 
             wardStatus === 'critical' ? 'border-red-500 shadow-[0_0_20px_rgba(255,0,60,0.3)]' :
+            wardStatus === 'error' ? 'border-red-500 shadow-[0_0_20px_rgba(255,0,60,0.3)]' :
             wardStatus === 'warning' ? 'border-amber-500 shadow-[0_0_20px_rgba(255,204,0,0.3)]' :
             wardStatus === 'offline' ? 'border-slate-400' :
             'border-emerald-500 shadow-[0_0_20px_rgba(102,252,241,0.2)]';
@@ -139,6 +147,7 @@ export const SensorsView: React.FC<SensorsViewProps> = ({ configs, readings }) =
                 </h3>
                 <span className={`px-2 py-1 rounded text-xs font-bold uppercase ${
                   wardStatus === 'critical' ? 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-neon-red' :
+                  wardStatus === 'error' ? 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400' :
                   wardStatus === 'warning' ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-neon-amber' :
                   wardStatus === 'offline' ? 'bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-slate-400' :
                   'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-neon-green'

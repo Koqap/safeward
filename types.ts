@@ -7,6 +7,7 @@ export interface SensorReading {
   unit: string;
   timestamp: number;
   location: string;
+  error?: string;
 }
 
 export interface SensorConfig {
