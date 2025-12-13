@@ -46,9 +46,9 @@ const char* API_ENDPOINT = "https://safeward-jcov.vercel.app/api/receive";
 // Timing
 #define UPDATE_INTERVAL 1000   // Update display every 1 second (Faster for demo)
 
-// Alarm Thresholds
-#define GAS_WARNING_THRESHOLD 500  // PPM threshold for warning
-#define GAS_CRITICAL_THRESHOLD 1000 // PPM threshold for critical alarm
+// Alarm Thresholds (Hospital Standard)
+#define GAS_WARNING_THRESHOLD 200  // PPM threshold for warning (Early leak suspicion)
+#define GAS_CRITICAL_THRESHOLD 500 // PPM threshold for critical alarm (Immediate response)
 
 // ========================================
 
@@ -118,12 +118,47 @@ void setup() {
   // Play Intro Animation
   playIntroAnimation();
   
-  startTime = millis();
+  // --- Blocking Wi-Fi Connection ---
+  display.clearDisplay();
+  display.setTextSize(1);
+  display.setTextColor(SSD1306_WHITE);
+  display.setCursor(0, 20);
+  display.println(F("Connecting to WiFi..."));
+  display.setCursor(0, 35);
+  display.println(WIFI_SSID);
+  display.display();
   
-  // Start WiFi (Non-blocking)
-  Serial.println("Connecting to WiFi...");
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
   
+  int dots = 0;
+  unsigned long wifiStart = millis();
+  
+  while (WiFi.status() != WL_CONNECTED && millis() - wifiStart < 10000) {
+    delay(500);
+    Serial.print(".");
+    
+    // Visual Loading Bar
+    dots++;
+    display.fillRect(0, 50, (dots * 6) % 128, 4, SSD1306_WHITE);
+    display.display();
+  }
+  
+  display.clearDisplay();
+  display.setCursor(0, 25);
+  display.setTextSize(2);
+  
+  if (WiFi.status() == WL_CONNECTED) {
+    display.println(F("CONNECTED!"));
+    Serial.println("\nWiFi Connected!");
+  } else {
+    display.println(F("FAILED!"));
+    Serial.println("\nWiFi Connection Failed (Continuing offline)");
+  }
+  display.display();
+  delay(1000);
+  // -----------------------------
+  
+  startTime = millis();
   Serial.println("\nSetup complete. Starting simulation...\n");
 }
 

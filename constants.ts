@@ -9,8 +9,8 @@ export const SENSOR_CONFIGS: SensorConfig[] = [
     type: 'TEMPERATURE',
     label: 'Ward A Temp',
     unit: '°C',
-    safeRange: [20, 26],
-    warningThreshold: 28,
+    safeRange: [22, 26],
+    warningThreshold: 26,
     location: 'Ward A'
   },
   {
@@ -18,8 +18,8 @@ export const SENSOR_CONFIGS: SensorConfig[] = [
     type: 'HUMIDITY',
     label: 'Ward A Humidity',
     unit: '%',
-    safeRange: [30, 60],
-    warningThreshold: 65,
+    safeRange: [40, 60],
+    warningThreshold: 60,
     location: 'Ward A'
   },
   {
@@ -27,8 +27,8 @@ export const SENSOR_CONFIGS: SensorConfig[] = [
     type: 'METHANE',
     label: 'Ward A Methane',
     unit: 'ppm',
-    safeRange: [0, 500],
-    warningThreshold: 800,
+    safeRange: [0, 200],
+    warningThreshold: 200,
     location: 'Ward A'
   },
 
@@ -38,8 +38,8 @@ export const SENSOR_CONFIGS: SensorConfig[] = [
     type: 'TEMPERATURE',
     label: 'Ward B Temp',
     unit: '°C',
-    safeRange: [20, 26],
-    warningThreshold: 28,
+    safeRange: [22, 26],
+    warningThreshold: 26,
     location: 'Ward B'
   },
   {
@@ -47,8 +47,8 @@ export const SENSOR_CONFIGS: SensorConfig[] = [
     type: 'HUMIDITY',
     label: 'Ward B Humidity',
     unit: '%',
-    safeRange: [30, 60],
-    warningThreshold: 65,
+    safeRange: [40, 60],
+    warningThreshold: 60,
     location: 'Ward B'
   },
   {
@@ -56,8 +56,8 @@ export const SENSOR_CONFIGS: SensorConfig[] = [
     type: 'METHANE',
     label: 'Ward B Methane',
     unit: 'ppm',
-    safeRange: [0, 500],
-    warningThreshold: 800,
+    safeRange: [0, 200],
+    warningThreshold: 200,
     location: 'Ward B'
   },
 
@@ -67,8 +67,8 @@ export const SENSOR_CONFIGS: SensorConfig[] = [
     type: 'TEMPERATURE',
     label: 'Ward C Temp',
     unit: '°C',
-    safeRange: [20, 26],
-    warningThreshold: 28,
+    safeRange: [22, 26],
+    warningThreshold: 26,
     location: 'Ward C'
   },
   {
@@ -76,8 +76,8 @@ export const SENSOR_CONFIGS: SensorConfig[] = [
     type: 'HUMIDITY',
     label: 'Ward C Humidity',
     unit: '%',
-    safeRange: [30, 60],
-    warningThreshold: 65,
+    safeRange: [40, 60],
+    warningThreshold: 60,
     location: 'Ward C'
   },
   {
@@ -85,8 +85,8 @@ export const SENSOR_CONFIGS: SensorConfig[] = [
     type: 'METHANE',
     label: 'Ward C Methane',
     unit: 'ppm',
-    safeRange: [0, 500],
-    warningThreshold: 800,
+    safeRange: [0, 200],
+    warningThreshold: 200,
     location: 'Ward C'
   },
 ];

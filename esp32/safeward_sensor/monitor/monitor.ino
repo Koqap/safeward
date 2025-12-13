@@ -56,8 +56,8 @@ const char* DEVICE_ID = "esp32-monitor-01";
 #define MQ5_RO 9.83      // Sensor resistance in clean air
 #define MQ5_MIN_PPM 200  // Minimum detectable PPM
 #define MQ5_MAX_PPM 10000 // Maximum detectable PPM
-#define GAS_WARNING_THRESHOLD 500  // PPM threshold for warning
-#define GAS_CRITICAL_THRESHOLD 1000 // PPM threshold for critical alarm
+#define GAS_WARNING_THRESHOLD 200  // PPM threshold for warning (Hospital Standard)
+#define GAS_CRITICAL_THRESHOLD 500 // PPM threshold for critical alarm (Hospital Standard)
 
 // Smoothing
 #define NUM_SAMPLES 10   // Number of samples for smoothing
