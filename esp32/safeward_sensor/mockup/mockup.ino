@@ -24,7 +24,7 @@
 // ============ CONFIGURATION ============
 // Device Configuration
 const char* DEVICE_ID = "esp32-mockup-01";
-const char* LOCATION = "Mockup Ward";
+const char* LOCATION = "Ward A";
 
 // WiFi Credentials
 const char* WIFI_SSID = "PLDTHOMEFIBR4TXcT";
@@ -58,7 +58,7 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 // Variables
 unsigned long lastUpdateTime = 0;
 unsigned long lastApiSendTime = 0;
-#define API_SEND_INTERVAL 3000
+#define API_SEND_INTERVAL 1000
 float lastMethane = 0;
 float lastTemperature = 0;
 float lastHumidity = 0;
@@ -93,6 +93,7 @@ void handleButton();
 void handleLED();
 void drawMainView();
 void drawAnalyticsView();
+void sendDataToAPI(); // Added missing prototype
 String formatTime(unsigned long millis);
 
 void setup() {
@@ -134,14 +135,23 @@ void loop() {
   // Update readings at intervals
   if (millis() - lastUpdateTime >= UPDATE_INTERVAL) {
     readSensors();
+    updateDisplay();
+    lastUpdateTime = millis();
+  }
+  
   // Send to API
   if (millis() - lastApiSendTime >= API_SEND_INTERVAL) {
     if (WiFi.status() == WL_CONNECTED) {
       sendDataToAPI();
     } else {
-      Serial.println("WiFi disconnected. Reconnecting...");
-      WiFi.disconnect();
-      WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+      // Only try to reconnect if enough time has passed (avoid spamming WiFi.begin)
+      static unsigned long lastReconnectAttempt = 0;
+      if (millis() - lastReconnectAttempt > 10000) {
+        Serial.println("WiFi disconnected. Attempting to reconnect...");
+        WiFi.disconnect();
+        WiFi.reconnect();
+        lastReconnectAttempt = millis();
+      }
     }
     lastApiSendTime = millis();
   }
