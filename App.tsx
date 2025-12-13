@@ -107,6 +107,8 @@ const App: React.FC = () => {
   const checkThresholds = useCallback((newReadings: SensorReading[]) => {
     const now = Date.now();
     
+    const generatedAlerts: Alert[] = [];
+    
     newReadings.forEach(reading => {
       const config = SENSOR_CONFIGS.find(c => c.id === reading.id);
       if (!config) return;
@@ -115,7 +117,7 @@ const App: React.FC = () => {
       let message = '';
 
       if (config.type === 'METHANE') {
-        // Critical: > 20% above warning threshold
+        // Critical: > 20% above warning threshold (Hospital Protocol)
         if (reading.value > (config.warningThreshold * 1.2)) {
            severity = 'CRITICAL';
            message = `CRITICAL METHANE LEAK at ${config.location}: ${reading.value}${config.unit}`;
@@ -133,45 +135,54 @@ const App: React.FC = () => {
       }
 
       if (severity) {
-        // Use reading timestamp for ID to be deterministic and allow history processing
-        const alertId = `${reading.id}-${reading.timestamp}`;
-        
+        // Create alert object
         const newAlert: Alert = {
-          id: alertId,
+          id: `${reading.id}-${now}`, 
           sensorId: reading.id,
-          message: message,
-          severity: severity,
-          timestamp: reading.timestamp,
+          // location removed as it is not in Alert interface
+          message,
+          timestamp: now,
+          severity,
           acknowledged: false
         };
         
-        setAlerts(prev => {
-          // Check if alert already exists
-          if (prev.some(a => a.id === alertId)) return prev;
-          
-          // Avoid duplicate alerts in short timeframe (10s) for same sensor
-          const lastAlert = prev.filter(a => a.sensorId === reading.id).sort((a, b) => b.timestamp - a.timestamp)[0];
-          if (lastAlert && (reading.timestamp - lastAlert.timestamp < 10000) && !lastAlert.acknowledged) {
-             return prev;
-          }
+        generatedAlerts.push(newAlert);
 
-          // Trigger Side Effects for NEW Critical Alerts
-          if (severity === 'CRITICAL') {
-             playAlertSound();
-             
-             if ('Notification' in window && Notification.permission === 'granted') {
-               new Notification('CRITICAL ALERT', {
-                 body: message,
-                 icon: '/vite.svg', // Fallback icon
-                 tag: alertId // Prevent duplicate notifications
-               });
-             }
-          }
-          
-          return [...prev, newAlert].sort((a, b) => b.timestamp - a.timestamp);
-        });
+        // HOSPITAL PROTOCOL:
+        // WARNING = Visual Only (Yellow) - No Sound, No Pop-up
+        // CRITICAL = Siren + Pop-up Notification
+        if (severity === 'CRITICAL') {
+           playAlertSound();
+           if ('Notification' in window && Notification.permission === 'granted') {
+             // Use a tag to prevent spamming notifications for the same alert
+             new Notification('CRITICAL ALERT', {
+               body: message,
+               icon: '/vite.svg',
+               tag: reading.id 
+             });
+           }
+        }
       }
     });
+    
+    // Update alerts state with new alerts, avoiding duplicates
+    if (generatedAlerts.length > 0) {
+      setAlerts(prev => {
+        const uniqueAlerts = [...prev];
+        generatedAlerts.forEach(newAlert => {
+           // Only add if we don't have a recent unacknowledged alert for this sensor
+           const exists = uniqueAlerts.some(a => 
+             a.sensorId === newAlert.sensorId && 
+             !a.acknowledged && 
+             (newAlert.timestamp - a.timestamp < 10000)
+           );
+           if (!exists) {
+             uniqueAlerts.push(newAlert);
+           }
+        });
+        return uniqueAlerts.sort((a, b) => b.timestamp - a.timestamp);
+      });
+    }
   }, [playAlertSound]);
 
   // Fetch data from API
