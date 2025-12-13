@@ -40,7 +40,7 @@ const char* LOCATION = "Ward A";  // Change for each ESP32: "Ward A", "Ward B", 
 #define DHT_TYPE DHT22   // DHT22 sensor type
 
 // Timing
-#define SEND_INTERVAL 5000   // Send data every 5 seconds (5000ms)
+#define SEND_INTERVAL 3000   // Send data every 3 seconds (3000ms)
 #define WIFI_TIMEOUT 10000   // WiFi connection timeout (10 seconds)
 
 // MQ-5 Calibration (adjust based on your sensor)

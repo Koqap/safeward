@@ -1,6 +1,8 @@
+
 import React, { useMemo, useState, useEffect } from 'react';
 import { SensorConfig, SensorReading, Alert } from '../types';
-import { AlertTriangle, CheckCircle, Wind, Thermometer, Droplets, Activity, Cpu, Radio, ChevronDown, Siren } from 'lucide-react';
+import { useCountUp } from '../hooks/useCountUp';
+import { AlertTriangle, CheckCircle, Wind, Thermometer, Droplets, Activity, WifiOff, ChevronDown, Cpu } from 'lucide-react';
 
 interface DashboardProps {
   configs: SensorConfig[];
@@ -69,110 +71,62 @@ const WardRow: React.FC<{
         ? 'dark:bg-amber-900/10 dark:border-neon-amber/50 bg-amber-50 border-amber-200' 
         : 'dark:bg-charcoal/80 dark:border-white/10 bg-emerald-50 border-emerald-200';
 
-  const decorativeBarColor = isOffline
-    ? 'bg-slate-400 dark:bg-slate-600'
-    : hasError
-      ? 'bg-red-500'
-    : isCritical
-      ? 'bg-neon-red shadow-[0_0_10px_#ff003c]'
-      : isWarning
-        ? 'bg-neon-amber shadow-[0_0_10px_#ffcc00]'
-        : 'bg-neon-green shadow-[0_0_10px_#66fcf1]';
+  const animatedMethane = useCountUp(methane?.data?.value || 0, 1000, 1);
+  const animatedTemp = useCountUp(temp?.data?.value || 0, 1000, 1);
+  const animatedHum = useCountUp(hum?.data?.value || 0, 1000, 1);
 
   return (
-    <div className={`rounded-2xl border ${statusColor} p-6 transition-all duration-300 mb-6 relative overflow-hidden group hover:shadow-lg backdrop-blur-sm ${isCritical ? 'shadow-red-100 dark:shadow-none' : 'shadow-sm'}`}>
-      {/* Decorative colored bar on left */}
-      <div className={`absolute top-0 left-0 bottom-0 w-1.5 ${decorativeBarColor}`} />
-      
-      {/* Background gradient for critical state */}
-      {isCritical && (
-        <div className="absolute inset-0 bg-red-50/50 animate-pulse pointer-events-none" />
-      )}
-
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pl-2 relative z-10">
-        
-        {/* Header Section */}
-        <div className="flex-shrink-0 min-w-[220px]">
-          <div className="flex items-center gap-4">
-             <div className={`p-3 rounded-xl shadow-sm ${isOffline ? 'bg-slate-100 text-slate-500 dark:bg-white/5 dark:text-slate-400' : hasError ? 'bg-red-100 text-red-600 dark:bg-red-500/20 dark:text-red-400' : isCritical ? 'bg-red-100 text-red-600 dark:bg-red-500/20 dark:text-neon-red' : isWarning ? 'bg-amber-100 text-amber-600 dark:bg-amber-500/20 dark:text-neon-amber' : 'bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-neon-green'}`}>
-                {isOffline ? <Radio className="w-8 h-8" /> : hasError ? <AlertTriangle className="w-8 h-8" /> : isCritical ? <Siren className="w-8 h-8 animate-pulse" /> : isWarning ? <Wind className="w-8 h-8" /> : <Activity className="w-8 h-8" />}
-             </div>
-             <div>
-               <h3 className="font-bold text-slate-800 dark:text-white text-xl tracking-tight">{location}</h3>
-               {/* Mock Room Number logic for display */}
-               <p className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wide">Room {location === 'Ward A' ? '101' : location === 'Ward B' ? '204' : '305'}</p>
-               <div className="flex items-center gap-1.5 mt-1">
-                 <div className={`w-2 h-2 rounded-full ${isOffline ? 'bg-slate-400' : isCritical ? 'bg-neon-red animate-ping shadow-[0_0_8px_#ff003c]' : 'bg-neon-green shadow-[0_0_5px_#66fcf1]'}`} />
-                 <p className="text-[10px] text-slate-400 font-mono">ID: {methane?.config?.id.split('-')[1].toUpperCase() || '00'}</p>
-               </div>
-             </div>
-          </div>
-        </div>
-
-        {/* Metrics Grid */}
-        <div className="flex-1 grid grid-cols-2 md:grid-cols-3 gap-8">
-           {/* Methane */}
-           <div className="relative group/metric">
-             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 flex items-center gap-1">
-               Methane Level
-               {isCritical && <AlertTriangle className="w-3 h-3 text-neon-red" />}
-             </p>
-             <div className={`text-3xl font-black tracking-tight transition-colors ${isOffline ? 'text-slate-500' : isCritical ? 'text-neon-red drop-shadow-[0_0_5px_rgba(255,0,60,0.5)]' : isWarning ? 'text-neon-amber' : 'text-neon-green'}`}>
-               {methane?.data ? Math.round(methane.data.value) : '--'} 
-               <span className="text-sm font-semibold ml-1 text-slate-400">ppm</span>
-             </div>
-             {/* Mini bar chart visual */}
-             <div className="h-1.5 w-full bg-slate-100 dark:bg-white/10 rounded-full mt-2 overflow-hidden">
-               <div 
-                 className={`h-full rounded-full transition-all duration-500 ${isOffline ? 'bg-slate-400' : isCritical ? 'bg-neon-red shadow-[0_0_10px_#ff003c]' : isWarning ? 'bg-neon-amber' : 'bg-neon-green'}`} 
-                 style={{ width: `${Math.min(((methane?.data?.value || 0) / 1000) * 100, 100)}%` }}
-               />
-             </div>
-           </div>
-
-           {/* Temperature */}
-           <div>
-             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Temperature</p>
-             <div className="text-3xl font-black text-slate-700 dark:text-slate-200 tracking-tight">
-               {temp?.data ? temp.data.value.toFixed(1) : '--'}
-               <span className="text-sm font-semibold ml-1 text-slate-400">°C</span>
-             </div>
-             <div className="h-1.5 w-full bg-slate-100 dark:bg-white/10 rounded-full mt-2 overflow-hidden">
-               <div 
-                 className="h-full rounded-full bg-blue-500 dark:bg-neon-blue transition-all duration-500"
-                 style={{ width: `${Math.min(((temp?.data?.value || 0) / 40) * 100, 100)}%` }}
-               />
-             </div>
-           </div>
-
-           {/* Humidity */}
-           <div className="hidden md:block">
-             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Humidity</p>
-             <div className="text-3xl font-black text-slate-700 dark:text-slate-200 tracking-tight">
-               {hum?.data ? Math.round(hum.data.value) : '--'}
-               <span className="text-sm font-semibold ml-1 text-slate-400">%</span>
-             </div>
-             <div className="h-1.5 w-full bg-slate-100 dark:bg-white/10 rounded-full mt-2 overflow-hidden">
-               <div 
-                 className="h-full rounded-full bg-cyan-500 dark:bg-cyan-400 transition-all duration-500"
-                 style={{ width: `${Math.min((hum?.data?.value || 0), 100)}%` }}
-               />
-             </div>
-           </div>
-        </div>
-
-        {/* Status Pill & Action */}
-        <div className="self-start md:self-center flex flex-col items-end gap-3">
-          <span className={`px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wide shadow-sm
+    <div className={`p-4 rounded-xl border transition-all duration-500 ease-in-out ${statusColor} hover:shadow-md`}>
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-3">
+          <h3 className="font-bold text-slate-800 dark:text-white text-lg">{location}</h3>
+          <span className={`px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wide shadow-sm transition-all duration-500
             ${isOffline ? 'bg-slate-100 text-slate-600 ring-1 ring-slate-200 dark:bg-white/5 dark:text-slate-400 dark:ring-white/10' : hasError ? 'bg-red-100 text-red-700 ring-1 ring-red-200 dark:bg-red-500/20 dark:text-red-400 dark:ring-red-500/50' : isCritical ? 'bg-red-100 text-red-700 animate-pulse ring-2 ring-red-200 dark:bg-red-500/20 dark:text-neon-red dark:ring-neon-red/50 dark:shadow-[0_0_10px_rgba(255,0,60,0.4)]' : isWarning ? 'bg-amber-100 text-amber-700 ring-1 ring-amber-200 dark:bg-amber-500/20 dark:text-neon-amber dark:ring-neon-amber/50' : 'bg-emerald-100 text-emerald-700 ring-1 ring-emerald-200 dark:bg-emerald-500/20 dark:text-neon-green dark:ring-neon-green/50'}`}>
             {isOffline ? 'OFFLINE' : hasError ? 'SENSOR ERROR' : isCritical ? 'CRITICAL LEAK' : isWarning ? 'Warning' : 'Safe'}
           </span>
-          
-          <button className="opacity-0 group-hover:opacity-100 transition-all duration-200 transform translate-x-2 group-hover:translate-x-0 text-xs font-bold text-blue-600 dark:text-neon-blue hover:text-blue-800 dark:hover:text-cyan-300 flex items-center gap-1">
-            View Details <ChevronDown className="w-3 h-3 -rotate-90" />
-          </button>
+        </div>
+        {isOffline && <WifiOff className="w-5 h-5 text-slate-400" />}
+      </div>
+
+      <div className="grid grid-cols-3 gap-4">
+        <div className="bg-white/50 dark:bg-black/20 rounded-lg p-3">
+          <div className="flex items-center gap-2 mb-1">
+            <Wind className="w-4 h-4 text-slate-400" />
+            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Methane</span>
+          </div>
+          <p className={`text-2xl font-black transition-colors duration-300 ${isCritical ? 'text-red-600 dark:text-neon-red animate-pulse' : isWarning ? 'text-amber-600 dark:text-neon-amber' : 'text-slate-700 dark:text-white'}`}>
+            {isOffline ? '--' : animatedMethane}<span className="text-xs font-medium text-slate-400 ml-1">ppm</span>
+          </p>
+        </div>
+        <div className="bg-white/50 dark:bg-black/20 rounded-lg p-3">
+          <div className="flex items-center gap-2 mb-1">
+            <Thermometer className="w-4 h-4 text-slate-400" />
+            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Temp</span>
+          </div>
+          <p className="text-2xl font-black text-slate-700 dark:text-white">
+            {isOffline ? '--' : animatedTemp}<span className="text-xs font-medium text-slate-400 ml-1">°C</span>
+          </p>
+        </div>
+        <div className="bg-white/50 dark:bg-black/20 rounded-lg p-3">
+          <div className="flex items-center gap-2 mb-1">
+            <Droplets className="w-4 h-4 text-slate-400" />
+            <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Humidity</span>
+          </div>
+          <p className="text-2xl font-black text-slate-700 dark:text-white">
+            {isOffline ? '--' : animatedHum}<span className="text-xs font-medium text-slate-400 ml-1">%</span>
+          </p>
         </div>
       </div>
+      
+      {/* Error Message Display */}
+      {hasError && (
+        <div className="mt-3 px-3 py-2 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-500/30 rounded-lg flex items-center gap-2 animate-pulse">
+          <AlertTriangle className="w-4 h-4 text-red-600 dark:text-red-400" />
+          <p className="text-xs font-medium text-red-700 dark:text-red-300">
+            {methane?.data?.error || temp?.data?.error || hum?.data?.error}
+          </p>
+        </div>
+      )}
     </div>
   );
 };

@@ -1,6 +1,6 @@
 import React from 'react';
 import { SensorConfig } from '../types';
-import { Settings, Wifi, Shield, Bell, Thermometer, Wind, Droplets, CheckCircle, Sliders } from 'lucide-react';
+import { Settings, Wifi, Shield, Bell, Thermometer, Wind, Droplets, CheckCircle, Sliders, Download, FileText } from 'lucide-react';
 
 interface SettingsViewProps {
   configs: SensorConfig[];
@@ -132,6 +132,30 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ configs, isConnected
             <span className="text-slate-700">Data Polling Interval</span>
             <span className="font-mono text-sm bg-slate-200 px-2 py-1 rounded">3 seconds</span>
           </div>
+        </div>
+      </div>
+
+      {/* Data Management */}
+      <div className="bg-white dark:bg-charcoal/50 dark:backdrop-blur-md rounded-xl border border-slate-200 dark:border-white/10 p-6 shadow-sm">
+        <div className="flex items-center gap-3 mb-4">
+          <FileText className="w-5 h-5 text-slate-600 dark:text-slate-400" />
+          <h3 className="text-lg font-bold text-slate-800 dark:text-white">Data Management</h3>
+        </div>
+        
+        <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-100 dark:border-white/5">
+          <div>
+            <p className="font-medium text-slate-700 dark:text-slate-300">Export Sensor History</p>
+            <p className="text-xs text-slate-500 dark:text-slate-500 mt-1">Download recent readings as XML file</p>
+          </div>
+          <a 
+            href={`${(import.meta as any).env.VITE_API_URL || ''}/api/export`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors shadow-sm shadow-blue-200 dark:shadow-none"
+          >
+            <Download className="w-4 h-4" />
+            Export XML
+          </a>
         </div>
       </div>
 
