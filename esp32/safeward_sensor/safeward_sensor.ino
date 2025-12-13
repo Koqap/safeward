@@ -37,7 +37,7 @@ const char* LOCATION = "Ward A";  // Change for each ESP32: "Ward A", "Ward B", 
 // Sensor Pins
 #define MQ5_PIN 34       // Analog pin for MQ-5 methane sensor
 #define DHT_PIN 4        // Digital pin for DHT22 sensor
-#define DHT_TYPE DHT22   // DHT22 sensor type
+#define DHT_TYPE DHT11   // DHT11 sensor type
 
 // Timing
 #define SEND_INTERVAL 3000   // Send data every 3 seconds (3000ms)

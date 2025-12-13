@@ -39,6 +39,41 @@ const App: React.FC = () => {
     }
   }, [darkMode]);
 
+  // Request Notification Permission
+  useEffect(() => {
+    if ('Notification' in window && Notification.permission !== 'granted') {
+      Notification.requestPermission();
+    }
+  }, []);
+
+  // Play Siren Sound
+  const playAlertSound = useCallback(() => {
+    try {
+      const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioContext) return;
+      
+      const ctx = new AudioContext();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      // Siren effect: Low to High frequency sweep
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(440, ctx.currentTime);
+      osc.frequency.linearRampToValueAtTime(880, ctx.currentTime + 0.5);
+      
+      gain.gain.setValueAtTime(0.3, ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.5);
+
+      osc.start();
+      osc.stop(ctx.currentTime + 0.5);
+    } catch (e) {
+      console.error('Audio playback failed', e);
+    }
+  }, []);
+
   // Convert API data to SensorReading format
   const convertApiDataToReadings = useCallback((apiData: ApiSensorData[]): SensorReading[] => {
     const newReadings: SensorReading[] = [];
@@ -119,12 +154,25 @@ const App: React.FC = () => {
           if (lastAlert && (reading.timestamp - lastAlert.timestamp < 10000) && !lastAlert.acknowledged) {
              return prev;
           }
+
+          // Trigger Side Effects for NEW Critical Alerts
+          if (severity === 'CRITICAL') {
+             playAlertSound();
+             
+             if ('Notification' in window && Notification.permission === 'granted') {
+               new Notification('CRITICAL ALERT', {
+                 body: message,
+                 icon: '/vite.svg', // Fallback icon
+                 tag: alertId // Prevent duplicate notifications
+               });
+             }
+          }
           
           return [...prev, newAlert].sort((a, b) => b.timestamp - a.timestamp);
         });
       }
     });
-  }, []);
+  }, [playAlertSound]);
 
   // Fetch data from API
   const fetchSensorData = useCallback(async () => {
