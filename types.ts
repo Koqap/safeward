@@ -16,6 +16,7 @@ export interface SensorConfig {
   unit: string;
   safeRange: [number, number]; // [min, max]
   warningThreshold: number; // Value above/below which triggers warning
+  criticalThreshold?: number; // Value above which triggers critical alert
   location: string;
 }
 
