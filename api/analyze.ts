@@ -78,8 +78,9 @@ Please provide a concise safety report for ONLY the wards listed above (${active
 1. Analyze the trends. Is the environment stable?
 2. Identify any potential hazards (infection risks due to temp/humidity, fire risks due to methane).
 3. Recommend specific actions for hospital staff.
+4. Suggest 2-3 safety features or improvements based on the current data patterns (e.g., "Install better ventilation in Ward A", "Calibrate sensors").
 
-Keep the tone professional and clinical. Only report on wards that have data provided.`;
+Keep the tone professional and clinical. Use markdown formatting (bolding, lists) for readability. Only report on wards that have data provided.`;
 
     // Call OpenRouter API
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {

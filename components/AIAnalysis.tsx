@@ -64,10 +64,21 @@ export const AIAnalysis: React.FC<AIAnalysisProps> = ({ readings, alerts }) => {
            </div>
            
            <div className="prose prose-slate dark:prose-invert max-w-none">
-             {/* Simple whitespace rendering if not using markdown lib, but cleaner with just preserving whitespace */}
-             <pre className="whitespace-pre-wrap font-mono text-sm text-slate-600 dark:text-neon-green/90 leading-relaxed bg-slate-50 dark:bg-black/40 p-6 rounded-lg border border-slate-100 dark:border-white/5 shadow-inner">
-               {report}
-             </pre>
+             <div className="bg-slate-50 dark:bg-black/40 p-6 rounded-lg border border-slate-100 dark:border-white/5 shadow-inner">
+               <ReactMarkdown 
+                 components={{
+                   h1: ({node, ...props}) => <h1 className="text-xl font-bold text-blue-600 dark:text-neon-blue mb-4" {...props} />,
+                   h2: ({node, ...props}) => <h2 className="text-lg font-bold text-slate-800 dark:text-white mt-6 mb-3 border-b border-slate-200 dark:border-white/10 pb-2" {...props} />,
+                   h3: ({node, ...props}) => <h3 className="text-md font-bold text-slate-700 dark:text-slate-200 mt-4 mb-2" {...props} />,
+                   ul: ({node, ...props}) => <ul className="list-disc list-inside space-y-1 mb-4 text-slate-600 dark:text-slate-300" {...props} />,
+                   li: ({node, ...props}) => <li className="ml-4" {...props} />,
+                   p: ({node, ...props}) => <p className="mb-4 text-slate-600 dark:text-slate-300 leading-relaxed" {...props} />,
+                   strong: ({node, ...props}) => <strong className="font-bold text-slate-800 dark:text-neon-green" {...props} />,
+                 }}
+               >
+                 {report}
+               </ReactMarkdown>
+             </div>
            </div>
         </div>
       )}

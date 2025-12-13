@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { SensorConfig, SensorReading } from '../types';
-import { Activity, Wind, Thermometer, Droplets, CheckCircle, AlertTriangle } from 'lucide-react';
+import { Activity, Wind, Thermometer, Droplets, CheckCircle, AlertTriangle, WifiOff } from 'lucide-react';
 
 interface SensorsViewProps {
   configs: SensorConfig[];
@@ -8,12 +8,23 @@ interface SensorsViewProps {
 }
 
 export const SensorsView: React.FC<SensorsViewProps> = ({ configs, readings }) => {
+  const [currentTime, setCurrentTime] = useState(Date.now());
+
+  useEffect(() => {
+    const interval = setInterval(() => setCurrentTime(Date.now()), 1000);
+    return () => clearInterval(interval);
+  }, []);
+
   const getLatestReading = (id: string) => {
     return readings.filter(r => r.id === id).pop();
   };
 
   const getStatus = (reading: SensorReading | undefined, config: SensorConfig) => {
     if (!reading) return 'offline';
+    
+    // Check if data is stale (> 15 seconds)
+    if (currentTime - reading.timestamp > 15000) return 'offline';
+
     if (config.type === 'METHANE') {
        if (reading.value > config.warningThreshold * 1.2) return 'critical';
        if (reading.value >= config.warningThreshold) return 'warning';
@@ -64,7 +75,7 @@ export const SensorsView: React.FC<SensorsViewProps> = ({ configs, readings }) =
                   <td className="px-6 py-4">
                     {status === 'offline' ? (
                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-slate-400">
-                         Offline
+                         <WifiOff className="w-3 h-3" /> Offline
                        </span>
                     ) : status === 'safe' ? (
                       <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-neon-green">
