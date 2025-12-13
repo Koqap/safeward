@@ -17,10 +17,19 @@
 #include <Wire.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
+#include <WiFi.h>
+#include <HTTPClient.h>
+#include <ArduinoJson.h>
 
 // ============ CONFIGURATION ============
 // Device Configuration
 const char* DEVICE_ID = "esp32-mockup-01";
+const char* LOCATION = "Mockup Ward";
+
+// WiFi Credentials
+const char* WIFI_SSID = "PLDTHOMEFIBR4TXcT";
+const char* WIFI_PASSWORD = "c@binaB2025";
+const char* API_ENDPOINT = "https://safeward-jcov.vercel.app/api/receive";
 
 // OLED Display Configuration
 #define SCREEN_WIDTH 128 // OLED display width, in pixels
@@ -48,6 +57,8 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
 // Variables
 unsigned long lastUpdateTime = 0;
+unsigned long lastApiSendTime = 0;
+#define API_SEND_INTERVAL 3000
 float lastMethane = 0;
 float lastTemperature = 0;
 float lastHumidity = 0;
@@ -107,6 +118,11 @@ void setup() {
   playIntroAnimation();
   
   startTime = millis();
+  
+  // Start WiFi (Non-blocking)
+  Serial.println("Connecting to WiFi...");
+  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+  
   Serial.println("\nSetup complete. Starting simulation...\n");
 }
 
@@ -118,8 +134,16 @@ void loop() {
   // Update readings at intervals
   if (millis() - lastUpdateTime >= UPDATE_INTERVAL) {
     readSensors();
-    updateDisplay();
-    lastUpdateTime = millis();
+  // Send to API
+  if (millis() - lastApiSendTime >= API_SEND_INTERVAL) {
+    if (WiFi.status() == WL_CONNECTED) {
+      sendDataToAPI();
+    } else {
+      Serial.println("WiFi disconnected. Reconnecting...");
+      WiFi.disconnect();
+      WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+    }
+    lastApiSendTime = millis();
   }
 }
 
@@ -320,6 +344,14 @@ void drawMainView() {
   display.setCursor(2, 3);
   display.print(F("SafeWard"));
   
+  // WiFi Status
+  display.setCursor(55, 3);
+  if (WiFi.status() == WL_CONNECTED) {
+    display.print(F("WIFI"));
+  } else {
+    display.print(F("---"));
+  }
+  
   // Status Indicator
   display.setCursor(80, 3); 
   if (dhtError) {
@@ -417,4 +449,35 @@ String formatTime(unsigned long millis) {
   char buffer[10];
   sprintf(buffer, "%02lu:%02lu:%02lu", hours, minutes, seconds);
   return String(buffer);
+}
+
+void sendDataToAPI() {
+  if (WiFi.status() != WL_CONNECTED) return;
+  
+  HTTPClient http;
+  http.begin(API_ENDPOINT);
+  http.addHeader("Content-Type", "application/json");
+  
+  StaticJsonDocument<256> doc;
+  doc["device_id"] = DEVICE_ID;
+  doc["location"] = LOCATION;
+  doc["methane"] = lastMethane;
+  doc["temperature"] = lastTemperature;
+  doc["humidity"] = lastHumidity;
+  if (dhtError) {
+    doc["error"] = "DHT Read Error";
+  }
+  
+  String jsonPayload;
+  serializeJson(doc, jsonPayload);
+  
+  int httpCode = http.POST(jsonPayload);
+  
+  if (httpCode > 0) {
+    Serial.printf("[API] Sent: %s | Code: %d\n", jsonPayload.c_str(), httpCode);
+  } else {
+    Serial.printf("[API] Error: %s\n", http.errorToString(httpCode).c_str());
+  }
+  
+  http.end();
 }
