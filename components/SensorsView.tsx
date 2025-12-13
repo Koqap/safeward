@@ -159,7 +159,7 @@ export const SensorsView: React.FC<SensorsViewProps> = ({ configs, readings }) =
                  </Suspense>
                  {/* Overlay Status */}
                  <div className="absolute bottom-2 right-2 text-[10px] text-slate-400 font-mono bg-white/80 dark:bg-black/50 px-2 py-1 rounded backdrop-blur-sm">
-                    ESP32-WROOM-32
+                    ESP32-DEVKIT
                  </div>
               </div>
 
