@@ -228,7 +228,7 @@ const App: React.FC = () => {
     fetchSensorData();
     
     // Set up polling interval
-    const interval = setInterval(fetchSensorData, 1000);
+    const interval = setInterval(fetchSensorData, 2000);
 
     return () => clearInterval(interval);
   }, [fetchSensorData]);

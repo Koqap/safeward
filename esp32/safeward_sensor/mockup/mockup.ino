@@ -58,7 +58,7 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 // Variables
 unsigned long lastUpdateTime = 0;
 unsigned long lastApiSendTime = 0;
-#define API_SEND_INTERVAL 1000
+#define API_SEND_INTERVAL 2000
 float lastMethane = 0;
 float lastTemperature = 0;
 float lastHumidity = 0;
