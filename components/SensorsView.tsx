@@ -152,7 +152,7 @@ export const SensorsView: React.FC<SensorsViewProps> = ({ configs, readings }) =
                  <Suspense fallback={<div className="absolute inset-0 flex items-center justify-center text-slate-400">Loading 3D Model...</div>}>
                     <Canvas shadows dpr={[1, 2]} camera={{ position: [0, 0, 4], fov: 50 }}>
                       <Stage environment="city" intensity={0.6}>
-                        <Model scale={0.5} rotation={[-Math.PI / 2, Math.PI, 0]} />
+                        <Model scale={0.5} rotation={[Math.PI / 2, 0, 0]} />
                       </Stage>
                       <OrbitControls autoRotate autoRotateSpeed={4} enableZoom={false} />
                     </Canvas>
