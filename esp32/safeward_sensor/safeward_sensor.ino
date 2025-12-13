@@ -199,7 +199,7 @@ void sendDataToAPI() {
   if (lastError != "") {
     doc["error"] = lastError;
   }
-  doc["timestamp"] = millis();  // Note: In production, use NTP for real timestamps
+  // doc["timestamp"] = millis();  // Removed: Let API assign server time to avoid "Offline" status due to small millis() value
   
   String jsonPayload;
   serializeJson(doc, jsonPayload);

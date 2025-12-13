@@ -50,7 +50,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         methane: data.methane || 0,
         temperature: data.temperature || 0,
         humidity: data.humidity || 0,
-        timestamp: data.timestamp || Date.now(),
+        // Use server time if timestamp is missing or looks like millis() (too small)
+        timestamp: (data.timestamp && data.timestamp > 1600000000000) ? data.timestamp : Date.now(),
         error: data.error
       };
 
