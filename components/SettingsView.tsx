@@ -5,9 +5,11 @@ import { Settings, Wifi, Shield, Bell, Thermometer, Wind, Droplets, CheckCircle,
 interface SettingsViewProps {
   configs: SensorConfig[];
   isConnected: boolean;
+  soundEnabled: boolean;
+  setSoundEnabled: (enabled: boolean) => void;
 }
 
-export const SettingsView: React.FC<SettingsViewProps> = ({ configs, isConnected }) => {
+export const SettingsView: React.FC<SettingsViewProps> = ({ configs, isConnected, soundEnabled, setSoundEnabled }) => {
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Header */}
@@ -113,24 +115,37 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ configs, isConnected
       </div>
 
       {/* Alert Settings */}
-      <div className="bg-white rounded-xl border border-slate-200 p-6">
+      <div className="bg-white dark:bg-charcoal/50 dark:backdrop-blur-md rounded-xl border border-slate-200 dark:border-white/10 p-6 shadow-sm">
         <div className="flex items-center gap-3 mb-4">
-          <Bell className="w-5 h-5 text-slate-600" />
-          <h3 className="text-lg font-bold text-slate-800">Alert Settings</h3>
+          <Bell className="w-5 h-5 text-slate-600 dark:text-slate-400" />
+          <h3 className="text-lg font-bold text-slate-800 dark:text-white">Alert Settings</h3>
         </div>
         
         <div className="space-y-3">
-          <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
-            <span className="text-slate-700">Critical Alert Multiplier</span>
-            <span className="font-mono text-sm bg-slate-200 px-2 py-1 rounded">1.2x warning threshold</span>
+          <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-white/5 rounded-lg">
+            <div>
+              <span className="block text-slate-700 dark:text-slate-300 font-medium">Critical Alert Siren</span>
+              <span className="text-xs text-slate-500 dark:text-slate-500">Enable audible siren and browser notifications for critical events</span>
+            </div>
+            <button 
+              onClick={() => setSoundEnabled(!soundEnabled)}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${soundEnabled ? 'bg-blue-600' : 'bg-slate-200 dark:bg-white/10'}`}
+            >
+              <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${soundEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
+            </button>
           </div>
-          <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
-            <span className="text-slate-700">Alert Debounce Time</span>
-            <span className="font-mono text-sm bg-slate-200 px-2 py-1 rounded">10 seconds</span>
+
+          <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-white/5 rounded-lg">
+            <span className="text-slate-700 dark:text-slate-300">Critical Alert Multiplier</span>
+            <span className="font-mono text-sm bg-slate-200 dark:bg-white/10 dark:text-slate-300 px-2 py-1 rounded">1.2x warning threshold</span>
           </div>
-          <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
-            <span className="text-slate-700">Data Polling Interval</span>
-            <span className="font-mono text-sm bg-slate-200 px-2 py-1 rounded">3 seconds</span>
+          <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-white/5 rounded-lg">
+            <span className="text-slate-700 dark:text-slate-300">Alert Debounce Time</span>
+            <span className="font-mono text-sm bg-slate-200 dark:bg-white/10 dark:text-slate-300 px-2 py-1 rounded">10 seconds</span>
+          </div>
+          <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-white/5 rounded-lg">
+            <span className="text-slate-700 dark:text-slate-300">Data Polling Interval</span>
+            <span className="font-mono text-sm bg-slate-200 dark:bg-white/10 dark:text-slate-300 px-2 py-1 rounded">0.5 seconds</span>
           </div>
         </div>
       </div>

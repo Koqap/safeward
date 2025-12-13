@@ -29,6 +29,7 @@ const App: React.FC = () => {
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [isConnected, setIsConnected] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
+  const [soundEnabled, setSoundEnabled] = useState(false); // Default to false (Silent)
 
   // Toggle Dark Mode
   useEffect(() => {
@@ -39,15 +40,17 @@ const App: React.FC = () => {
     }
   }, [darkMode]);
 
-  // Request Notification Permission
+  // Request Notification Permission (Only if sound enabled)
   useEffect(() => {
-    if ('Notification' in window && Notification.permission !== 'granted') {
+    if (soundEnabled && 'Notification' in window && Notification.permission !== 'granted') {
       Notification.requestPermission();
     }
-  }, []);
+  }, [soundEnabled]);
 
   // Play Siren Sound
   const playAlertSound = useCallback(() => {
+    if (!soundEnabled) return; // Silent mode check
+    
     try {
       const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
       if (!AudioContext) return;
@@ -72,7 +75,7 @@ const App: React.FC = () => {
     } catch (e) {
       console.error('Audio playback failed', e);
     }
-  }, []);
+  }, [soundEnabled]);
 
   // Convert API data to SensorReading format
   const convertApiDataToReadings = useCallback((apiData: ApiSensorData[]): SensorReading[] => {
@@ -150,8 +153,8 @@ const App: React.FC = () => {
 
         // HOSPITAL PROTOCOL:
         // WARNING = Visual Only (Yellow) - No Sound, No Pop-up
-        // CRITICAL = Siren + Pop-up Notification
-        if (severity === 'CRITICAL') {
+        // CRITICAL = Siren + Pop-up Notification (ONLY IF ENABLED)
+        if (severity === 'CRITICAL' && soundEnabled) {
            playAlertSound();
            if ('Notification' in window && Notification.permission === 'granted') {
              // Use a tag to prevent spamming notifications for the same alert
@@ -239,7 +242,7 @@ const App: React.FC = () => {
     fetchSensorData();
     
     // Set up polling interval
-    const interval = setInterval(fetchSensorData, 2000);
+    const interval = setInterval(fetchSensorData, 500);
 
     return () => clearInterval(interval);
   }, [fetchSensorData]);
@@ -416,7 +419,12 @@ const App: React.FC = () => {
                 <AnalyticsView configs={SENSOR_CONFIGS} readings={readings} alerts={alerts} />
              )}
              {currentView === 'SETTINGS' && (
-                <SettingsView configs={SENSOR_CONFIGS} isConnected={isConnected} />
+                <SettingsView 
+                  configs={SENSOR_CONFIGS} 
+                  isConnected={isConnected} 
+                  soundEnabled={soundEnabled}
+                  setSoundEnabled={setSoundEnabled}
+                />
              )}
            </div>
         </div>
