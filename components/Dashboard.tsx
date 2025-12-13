@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { SensorConfig, SensorReading, Alert } from '../types';
 import { AlertTriangle, CheckCircle, Wind, Thermometer, Droplets, Activity, Cpu, Radio, ChevronDown, Siren } from 'lucide-react';
 
@@ -23,7 +23,8 @@ const WardRow: React.FC<{
   location: string;
   configs: SensorConfig[];
   readings: SensorReading[];
-}> = ({ location, configs, readings }) => {
+  now: number;
+}> = ({ location, configs, readings, now }) => {
   
   const getReading = (type: 'METHANE' | 'TEMPERATURE' | 'HUMIDITY') => {
     const config = configs.find(c => c.type === type);
@@ -47,18 +48,30 @@ const WardRow: React.FC<{
   const isCritical = methaneValue > (methaneLimit * 1.2);
   const isWarning = !isCritical && methaneValue >= methaneLimit;
 
-  // Determine container styling based on worst state
-  const statusColor = isCritical 
-    ? 'bg-red-50 border-red-200' 
-    : isWarning 
-      ? 'bg-amber-50 border-amber-200' 
-      : 'bg-emerald-50 border-emerald-200';
+  // Offline Check (15 seconds)
+  const lastTimestamp = Math.max(
+    methane?.data?.timestamp || 0,
+    temp?.data?.timestamp || 0,
+    hum?.data?.timestamp || 0
+  );
+  const isOffline = (now - lastTimestamp) > 15000;
 
-  const decorativeBarColor = isCritical
-    ? 'bg-red-500'
-    : isWarning
-      ? 'bg-amber-400'
-      : 'bg-emerald-400';
+  // Determine container styling based on worst state
+  const statusColor = isOffline
+    ? 'bg-slate-50 border-slate-200 opacity-75 grayscale-[0.5]'
+    : isCritical 
+      ? 'bg-red-50 border-red-200' 
+      : isWarning 
+        ? 'bg-amber-50 border-amber-200' 
+        : 'bg-emerald-50 border-emerald-200';
+
+  const decorativeBarColor = isOffline
+    ? 'bg-slate-400'
+    : isCritical
+      ? 'bg-red-500'
+      : isWarning
+        ? 'bg-amber-400'
+        : 'bg-emerald-400';
 
   return (
     <div className={`rounded-2xl border ${statusColor} p-6 transition-all duration-300 mb-6 relative overflow-hidden group hover:shadow-lg ${isCritical ? 'shadow-red-100' : 'shadow-sm'}`}>
@@ -75,15 +88,15 @@ const WardRow: React.FC<{
         {/* Header Section */}
         <div className="flex-shrink-0 min-w-[220px]">
           <div className="flex items-center gap-4">
-             <div className={`p-3 rounded-xl shadow-sm ${isCritical ? 'bg-red-100 text-red-600' : isWarning ? 'bg-amber-100 text-amber-600' : 'bg-emerald-100 text-emerald-600'}`}>
-                {isCritical ? <Siren className="w-8 h-8 animate-pulse" /> : isWarning ? <Wind className="w-8 h-8" /> : <Activity className="w-8 h-8" />}
+             <div className={`p-3 rounded-xl shadow-sm ${isOffline ? 'bg-slate-100 text-slate-500' : isCritical ? 'bg-red-100 text-red-600' : isWarning ? 'bg-amber-100 text-amber-600' : 'bg-emerald-100 text-emerald-600'}`}>
+                {isOffline ? <Radio className="w-8 h-8" /> : isCritical ? <Siren className="w-8 h-8 animate-pulse" /> : isWarning ? <Wind className="w-8 h-8" /> : <Activity className="w-8 h-8" />}
              </div>
              <div>
                <h3 className="font-bold text-slate-800 text-xl tracking-tight">{location}</h3>
                {/* Mock Room Number logic for display */}
                <p className="text-xs text-slate-500 font-semibold uppercase tracking-wide">Room {location === 'Ward A' ? '101' : location === 'Ward B' ? '204' : '305'}</p>
                <div className="flex items-center gap-1.5 mt-1">
-                 <div className={`w-2 h-2 rounded-full ${isCritical ? 'bg-red-500 animate-ping' : 'bg-emerald-500'}`} />
+                 <div className={`w-2 h-2 rounded-full ${isOffline ? 'bg-slate-400' : isCritical ? 'bg-red-500 animate-ping' : 'bg-emerald-500'}`} />
                  <p className="text-[10px] text-slate-400 font-mono">ID: {methane?.config?.id.split('-')[1].toUpperCase() || '00'}</p>
                </div>
              </div>
@@ -98,14 +111,14 @@ const WardRow: React.FC<{
                Methane Level
                {isCritical && <AlertTriangle className="w-3 h-3 text-red-500" />}
              </p>
-             <div className={`text-3xl font-black tracking-tight transition-colors ${isCritical ? 'text-red-600' : isWarning ? 'text-amber-600' : 'text-emerald-600'}`}>
+             <div className={`text-3xl font-black tracking-tight transition-colors ${isOffline ? 'text-slate-500' : isCritical ? 'text-red-600' : isWarning ? 'text-amber-600' : 'text-emerald-600'}`}>
                {methane?.data ? Math.round(methane.data.value) : '--'} 
                <span className="text-sm font-semibold ml-1 text-slate-400">ppm</span>
              </div>
              {/* Mini bar chart visual */}
              <div className="h-1.5 w-full bg-slate-100 rounded-full mt-2 overflow-hidden">
                <div 
-                 className={`h-full rounded-full transition-all duration-500 ${isCritical ? 'bg-red-500' : isWarning ? 'bg-amber-500' : 'bg-emerald-500'}`} 
+                 className={`h-full rounded-full transition-all duration-500 ${isOffline ? 'bg-slate-400' : isCritical ? 'bg-red-500' : isWarning ? 'bg-amber-500' : 'bg-emerald-500'}`} 
                  style={{ width: `${Math.min(((methane?.data?.value || 0) / 1000) * 100, 100)}%` }}
                />
              </div>
@@ -145,8 +158,8 @@ const WardRow: React.FC<{
         {/* Status Pill & Action */}
         <div className="self-start md:self-center flex flex-col items-end gap-3">
           <span className={`px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wide shadow-sm
-            ${isCritical ? 'bg-red-100 text-red-700 animate-pulse ring-2 ring-red-200' : isWarning ? 'bg-amber-100 text-amber-700 ring-1 ring-amber-200' : 'bg-emerald-100 text-emerald-700 ring-1 ring-emerald-200'}`}>
-            {isCritical ? 'CRITICAL LEAK' : isWarning ? 'Warning' : 'Safe'}
+            ${isOffline ? 'bg-slate-100 text-slate-600 ring-1 ring-slate-200' : isCritical ? 'bg-red-100 text-red-700 animate-pulse ring-2 ring-red-200' : isWarning ? 'bg-amber-100 text-amber-700 ring-1 ring-amber-200' : 'bg-emerald-100 text-emerald-700 ring-1 ring-emerald-200'}`}>
+            {isOffline ? 'OFFLINE' : isCritical ? 'CRITICAL LEAK' : isWarning ? 'Warning' : 'Safe'}
           </span>
           
           <button className="opacity-0 group-hover:opacity-100 transition-all duration-200 transform translate-x-2 group-hover:translate-x-0 text-xs font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1">
@@ -189,6 +202,12 @@ const StatusCard: React.FC<{
 };
 
 export const Dashboard: React.FC<DashboardProps> = ({ configs, readings, alerts }) => {
+  const [now, setNow] = useState(Date.now());
+
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, []);
   // Get latest readings for all sensors
   const latestReadings = useMemo(() => {
     const latest: SensorReading[] = [];
@@ -206,9 +225,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ configs, readings, alerts 
     const tempHumConfigs = configs.filter(c => c.type === 'TEMPERATURE' || c.type === 'HUMIDITY');
     const locations = [...new Set(configs.map(c => c.location))];
     
-    // Count how many sensors have recent readings (within last 10 seconds)
-    const now = Date.now();
-    const recentThreshold = 10000; // 10 seconds
+    // Count how many sensors have recent readings (within last 15 seconds)
+    const recentThreshold = 15000; // 15 seconds
     
     const onlineMethane = methaneConfigs.filter(c => {
       const reading = readings.filter(r => r.id === c.id).pop();
@@ -234,7 +252,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ configs, readings, alerts 
       tempHum: { online: onlineTempHum, total: tempHumConfigs.length },
       esp32: { online: activeLocations, total: locations.length }
     };
-  }, [configs, readings]);
+  }, [configs, readings, now]);
 
   // Group configurations by Ward/Location
   const groupedConfigs = useMemo(() => getGroupedConfigs(configs), [configs]);
@@ -302,6 +320,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ configs, readings, alerts 
                 location={location}
                 configs={groupedConfigs[location]}
                 readings={latestReadings}
+                now={now}
               />
             ))}
           </div>
