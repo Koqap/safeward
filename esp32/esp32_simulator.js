@@ -67,7 +67,7 @@ function generateReading(device) {
 
   // Simulate DHT Error
   let error = undefined;
-  if (Math.random() > 0.95) {
+  if (Math.random() > 0.8) { // Increased error rate for testing
     console.log(`  ⚠ ${device.location}: Simulating DHT Read Error`);
     error = "DHT22 read error";
   }

@@ -182,13 +182,16 @@ const StatusCard: React.FC<{
   label: string;
   subLabel: string;
   countStr: string;
-  status: 'Online' | 'Active' | 'Offline' | 'Waiting';
-}> = ({ icon: Icon, label, subLabel, countStr, status }) => {
+  status: 'Online' | 'Active' | 'Offline' | 'Waiting' | 'Attention';
+  errorCount?: number;
+}> = ({ icon: Icon, label, subLabel, countStr, status, errorCount = 0 }) => {
   const isOnline = status === 'Online' || status === 'Active';
+  const hasError = errorCount > 0;
+  
   return (
-    <div className={`${isOnline ? 'bg-emerald-50/50 border-emerald-100 dark:bg-emerald-500/10 dark:border-neon-green/20' : 'bg-slate-50 border-slate-200 dark:bg-white/5 dark:border-white/5'} border rounded-xl p-4 flex items-center justify-between mb-3 transition-all hover:shadow-md group`}>
+    <div className={`${hasError ? 'bg-amber-50 border-amber-200 dark:bg-amber-900/10 dark:border-neon-amber/30' : isOnline ? 'bg-emerald-50/50 border-emerald-100 dark:bg-emerald-500/10 dark:border-neon-green/20' : 'bg-slate-50 border-slate-200 dark:bg-white/5 dark:border-white/5'} border rounded-xl p-4 flex items-center justify-between mb-3 transition-all hover:shadow-md group`}>
        <div className="flex items-center gap-4">
-          <div className={`${isOnline ? 'bg-gradient-to-br from-emerald-400 to-emerald-600 shadow-emerald-200 dark:from-neon-green dark:to-emerald-600 dark:shadow-none' : 'bg-slate-400 dark:bg-slate-600'} p-2.5 rounded-xl text-white shadow-lg`}>
+          <div className={`${hasError ? 'bg-amber-100 text-amber-600 dark:bg-amber-500/20 dark:text-neon-amber' : isOnline ? 'bg-gradient-to-br from-emerald-400 to-emerald-600 shadow-emerald-200 dark:from-neon-green dark:to-emerald-600 dark:shadow-none' : 'bg-slate-400 dark:bg-slate-600'} p-2.5 rounded-xl text-white shadow-lg`}>
              <Icon className="w-5 h-5" />
           </div>
           <div>
@@ -197,10 +200,12 @@ const StatusCard: React.FC<{
           </div>
        </div>
        <div className="text-right">
-          <p className={`text-xl font-black ${isOnline ? 'text-emerald-700 dark:text-neon-green' : 'text-slate-500 dark:text-slate-500'} leading-tight tracking-tight`}>{countStr}</p>
+          <p className={`text-xl font-black ${hasError ? 'text-amber-600 dark:text-neon-amber' : isOnline ? 'text-emerald-700 dark:text-neon-green' : 'text-slate-500 dark:text-slate-500'} leading-tight tracking-tight`}>{countStr}</p>
           <div className="flex items-center justify-end gap-1 mt-0.5">
-            <div className={`w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-emerald-500 dark:bg-neon-green animate-pulse' : 'bg-slate-400 dark:bg-slate-600'}`} />
-            <p className={`text-[10px] ${isOnline ? 'text-emerald-600 dark:text-neon-green' : 'text-slate-400 dark:text-slate-500'} font-bold uppercase tracking-wide`}>{status}</p>
+            <div className={`w-1.5 h-1.5 rounded-full ${hasError ? 'bg-amber-500 dark:bg-neon-amber animate-pulse' : isOnline ? 'bg-emerald-500 dark:bg-neon-green animate-pulse' : 'bg-slate-400 dark:bg-slate-600'}`} />
+            <p className={`text-[10px] ${hasError ? 'text-amber-600 dark:text-neon-amber' : isOnline ? 'text-emerald-600 dark:text-neon-green' : 'text-slate-400 dark:text-slate-500'} font-bold uppercase tracking-wide`}>
+              {hasError ? `${errorCount} Errors` : status}
+            </p>
           </div>
        </div>
     </div>
@@ -236,12 +241,22 @@ export const Dashboard: React.FC<DashboardProps> = ({ configs, readings, alerts 
     
     const onlineMethane = methaneConfigs.filter(c => {
       const reading = readings.filter(r => r.id === c.id).pop();
-      return reading && (now - reading.timestamp) < recentThreshold;
+      return reading && (now - reading.timestamp) < recentThreshold && !reading.error;
+    }).length;
+
+    const errorMethane = methaneConfigs.filter(c => {
+      const reading = readings.filter(r => r.id === c.id).pop();
+      return reading && (now - reading.timestamp) < recentThreshold && !!reading.error;
     }).length;
     
     const onlineTempHum = tempHumConfigs.filter(c => {
       const reading = readings.filter(r => r.id === c.id).pop();
-      return reading && (now - reading.timestamp) < recentThreshold;
+      return reading && (now - reading.timestamp) < recentThreshold && !reading.error;
+    }).length;
+
+    const errorTempHum = tempHumConfigs.filter(c => {
+      const reading = readings.filter(r => r.id === c.id).pop();
+      return reading && (now - reading.timestamp) < recentThreshold && !!reading.error;
     }).length;
     
     const activeLocations = locations.filter(loc => {
@@ -254,8 +269,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ configs, readings, alerts 
     
     return {
       hasData,
-      methane: { online: onlineMethane, total: methaneConfigs.length },
-      tempHum: { online: onlineTempHum, total: tempHumConfigs.length },
+      methane: { online: onlineMethane, error: errorMethane, total: methaneConfigs.length },
+      tempHum: { online: onlineTempHum, error: errorTempHum, total: tempHumConfigs.length },
       esp32: { online: activeLocations, total: locations.length }
     };
   }, [configs, readings, now]);
@@ -338,19 +353,21 @@ export const Dashboard: React.FC<DashboardProps> = ({ configs, readings, alerts 
              <h3 className="font-bold text-slate-800 dark:text-white text-lg mb-1">IoT Sensor Status</h3>
              <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">Active monitoring devices</p>
              
-             <StatusCard 
+              <StatusCard 
                 icon={Wind} 
                 label="MQ-5 Sensors" 
                 subLabel="Methane Detection" 
                 countStr={`${sensorStatus.methane.online}/${sensorStatus.methane.total}`} 
-                status={sensorStatus.methane.online > 0 ? 'Online' : 'Waiting'} 
+                status={sensorStatus.methane.error > 0 ? 'Attention' : sensorStatus.methane.online > 0 ? 'Online' : 'Waiting'} 
+                errorCount={sensorStatus.methane.error}
               />
               <StatusCard 
                 icon={Thermometer} 
                 label="DHT22 Sensors" 
                 subLabel="Temp & Humidity" 
                 countStr={`${sensorStatus.tempHum.online}/${sensorStatus.tempHum.total}`} 
-                status={sensorStatus.tempHum.online > 0 ? 'Online' : 'Waiting'} 
+                status={sensorStatus.tempHum.error > 0 ? 'Attention' : sensorStatus.tempHum.online > 0 ? 'Online' : 'Waiting'} 
+                errorCount={sensorStatus.tempHum.error}
               />
               <StatusCard 
                 icon={Cpu} 
