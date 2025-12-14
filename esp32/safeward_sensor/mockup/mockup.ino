@@ -44,7 +44,7 @@ const char* API_ENDPOINT = "https://safeward-jcov.vercel.app/api/receive";
 #define LED_PIN 2        // Onboard LED pin
 
 // Timing
-#define UPDATE_INTERVAL 2000   // Update display every 2 seconds (Slower for stability)
+#define UPDATE_INTERVAL 3000   // Update display every 3 seconds (Slower for stability)
 
 // Alarm Thresholds (Hospital Standard)
 #define GAS_WARNING_THRESHOLD 200  // PPM threshold for warning (Early leak suspicion)
@@ -57,8 +57,8 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
 // Variables
 unsigned long lastUpdateTime = 0;
-unsigned long lastApiSendTime = 0;
-#define API_SEND_INTERVAL 2000
+unsigned long lastUpdateTime = 0;
+// lastApiSendTime removed as we send immediately on update
 float lastMethane = 0;
 float lastTemperature = 0;
 float lastHumidity = 0;
@@ -176,11 +176,8 @@ void loop() {
   if (millis() - lastUpdateTime >= UPDATE_INTERVAL) {
     readSensors();
     updateDisplay();
-    lastUpdateTime = millis();
-  }
-  
-  // Send to API
-  if (millis() - lastApiSendTime >= API_SEND_INTERVAL) {
+    
+    // Send to API immediately after reading new data
     if (WiFi.status() == WL_CONNECTED) {
       sendDataToAPI();
     } else {
@@ -193,7 +190,8 @@ void loop() {
         lastReconnectAttempt = millis();
       }
     }
-    lastApiSendTime = millis();
+    
+    lastUpdateTime = millis();
   }
 }
 
