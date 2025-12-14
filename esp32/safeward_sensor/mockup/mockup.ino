@@ -44,7 +44,7 @@ const char* API_ENDPOINT = "https://safeward-jcov.vercel.app/api/receive";
 #define LED_PIN 2        // Onboard LED pin
 
 // Timing
-#define UPDATE_INTERVAL 1000   // Update display every 1 second (Faster for demo)
+#define UPDATE_INTERVAL 2000   // Update display every 2 seconds (Slower for stability)
 
 // Alarm Thresholds (Hospital Standard)
 #define GAS_WARNING_THRESHOLD 200  // PPM threshold for warning (Early leak suspicion)
@@ -525,6 +525,7 @@ void sendDataToAPI() {
   HTTPClient http;
   http.begin(API_ENDPOINT);
   http.addHeader("Content-Type", "application/json");
+  http.addHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"); // Fake browser UA
   
   StaticJsonDocument<256> doc;
   doc["device_id"] = DEVICE_ID;

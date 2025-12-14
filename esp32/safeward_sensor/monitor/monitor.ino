@@ -349,103 +349,127 @@ void updateDisplay() {
 }
 
 void drawMainView() {
-  // Visual Alarm (Only on Critical)
-  if (lastMethane > GAS_CRITICAL_THRESHOLD) {
-    display.invertDisplay(true);
-  } else {
-    display.invertDisplay(false);
-  }
-  
-  // --- Top Bar ---
-  display.fillRect(0, 0, 128, 14, SSD1306_WHITE);
+  // --- Header Bar ---
+  display.fillRect(0, 0, 128, 16, SSD1306_WHITE);
   display.setTextColor(SSD1306_BLACK, SSD1306_WHITE);
   display.setTextSize(1);
-  display.setCursor(2, 3);
-  display.print(F("SafeWard"));
+  display.setCursor(4, 4);
+  display.print(F("MONITOR")); // Changed from WARD A since location isn't hardcoded here usually
   
-  // Status Indicator
-  display.setCursor(80, 3); // Moved left slightly to fit longer text
-  if (dhtError) {
-    display.print(F("ERR!"));
-  } else if (lastMethane > GAS_CRITICAL_THRESHOLD) {
-    display.print(F("CRITICAL"));
-  } else if (lastMethane > GAS_WARNING_THRESHOLD) {
-    display.print(F("WARNING"));
+  // Status Icon (Simple bars)
+  int statusX = 100;
+  int statusY = 4;
+  if (!dhtError) {
+    display.setCursor(statusX, statusY);
+    display.print(F("ACTIVE"));
   } else {
-    display.print(F("OK"));
+    display.setCursor(statusX, statusY);
+    display.print(F("ERR"));
   }
-  
+
   // --- Main Content ---
   display.setTextColor(SSD1306_WHITE);
   
-  // Methane / Alarm Text
-  display.setCursor(0, 20);
-  
-  if (lastMethane > GAS_CRITICAL_THRESHOLD) {
-    display.setTextSize(2);
-    display.println(F("CRITICAL!"));
-  } else if (lastMethane > GAS_WARNING_THRESHOLD) {
-    display.setTextSize(2);
-    display.println(F("WARNING!"));
-  } else {
-    display.setTextSize(1);
-    display.println(F("METHANE LEVEL:"));
-  }
-  
-  display.setCursor(0, 36); // Adjusted Y for larger text
+  // Methane Value (Large & Centered)
   display.setTextSize(2);
+  
+  // Dynamic centering based on value width
+  int valX = 10;
+  if (lastMethane < 10) valX = 50;
+  else if (lastMethane < 100) valX = 40;
+  else if (lastMethane < 1000) valX = 30;
+  
+  display.setCursor(valX, 25);
   display.print(lastMethane, 0);
+  
+  // Units & Status Badge
   display.setTextSize(1);
-  display.println(F(" ppm"));
+  display.setCursor(valX + (lastMethane < 1000 ? 50 : 65), 25);
+  display.println(F("PPM"));
   
-  // Divider
-  display.drawLine(0, 52, 128, 52, SSD1306_WHITE);
+  // Status Badge
+  display.setCursor(valX + (lastMethane < 1000 ? 50 : 65), 37);
+  if (lastMethane > GAS_CRITICAL_THRESHOLD) {
+    display.fillRect(valX + (lastMethane < 1000 ? 48 : 63), 35, 42, 11, SSD1306_WHITE);
+    display.setTextColor(SSD1306_BLACK);
+    display.print(F("CRIT!"));
+  } else if (lastMethane > GAS_WARNING_THRESHOLD) {
+    display.print(F("WARN"));
+  } else {
+    display.print(F("SAFE"));
+  }
+  display.setTextColor(SSD1306_WHITE);
+
+  // --- Footer (Temp & Hum) ---
+  display.drawLine(0, 50, 128, 50, SSD1306_WHITE);
   
-  // Temp & Humidity
-  display.setCursor(0, 55);
+  // Icons or just text
+  display.setCursor(4, 54);
   display.print(F("T:"));
   display.print(lastTemperature, 1);
   display.print(F("C"));
   
-  display.setCursor(64, 55);
+  display.drawLine(64, 52, 64, 64, SSD1306_WHITE); // Vertical separator
+  
+  display.setCursor(70, 54);
   display.print(F("H:"));
   display.print(lastHumidity, 1);
   display.print(F("%"));
+  
+  // Visual Alarm Overlay (Invert entire screen if Critical)
+  if (lastMethane > GAS_CRITICAL_THRESHOLD) {
+    if ((millis() / 500) % 2 == 0) { // Flash effect
+       display.invertDisplay(true);
+    } else {
+       display.invertDisplay(false);
+    }
+  } else {
+    display.invertDisplay(false);
+  }
 }
 
 void drawAnalyticsView() {
-  display.invertDisplay(false); // Ensure normal colors
+  display.invertDisplay(false); 
   display.setTextColor(SSD1306_WHITE);
   
   // Header
+  display.fillRect(0, 0, 128, 16, SSD1306_WHITE);
+  display.setTextColor(SSD1306_BLACK);
   display.setTextSize(1);
-  display.setCursor(0, 0);
-  display.println(F("--- ANALYTICS ---"));
-  display.drawLine(0, 10, 128, 10, SSD1306_WHITE);
+  display.setCursor(25, 4);
+  display.print(F("SESSION DATA"));
+  display.setTextColor(SSD1306_WHITE);
   
-  // Stats
-  display.setCursor(0, 15);
-  display.print(F("Max Gas: "));
+  // Grid Layout
+  // Row 1: Max Gas
+  display.setCursor(0, 20);
+  display.print(F("MAX GAS:"));
+  display.setCursor(64, 20);
   display.print(maxMethane, 0);
-  display.println(F(" ppm"));
+  display.print(F(" ppm"));
   
-  display.setCursor(0, 27);
-  display.print(F("Avg Gas: "));
+  // Row 2: Avg Gas
+  display.setCursor(0, 32);
+  display.print(F("AVG GAS:"));
+  display.setCursor(64, 32);
   if (totalReads > 0) {
     display.print((float)(totalMethaneSum / totalReads), 0);
   } else {
     display.print(F("0"));
   }
-  display.println(F(" ppm"));
+  display.print(F(" ppm"));
   
-  display.setCursor(0, 39);
-  display.print(F("Max T: "));
+  // Row 3: Max Temp
+  display.setCursor(0, 44);
+  display.print(F("MAX T:"));
+  display.setCursor(64, 44);
   display.print(maxTemperature, 1);
   display.print(F(" C"));
   
-  // Uptime
-  display.setCursor(0, 54);
-  display.print(F("Up: "));
+  // Footer: Uptime
+  display.drawLine(0, 54, 128, 54, SSD1306_WHITE);
+  display.setCursor(0, 56);
+  display.print(F("UP: "));
   display.print(formatTime(millis() - startTime));
 }
 

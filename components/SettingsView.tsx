@@ -5,11 +5,9 @@ import { Settings, Wifi, Shield, Bell, Thermometer, Wind, Droplets, CheckCircle,
 interface SettingsViewProps {
   configs: SensorConfig[];
   isConnected: boolean;
-  soundEnabled: boolean;
-  setSoundEnabled: (enabled: boolean) => void;
 }
 
-export const SettingsView: React.FC<SettingsViewProps> = ({ configs, isConnected, soundEnabled, setSoundEnabled }) => {
+export const SettingsView: React.FC<SettingsViewProps> = ({ configs, isConnected }) => {
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Header */}
@@ -123,19 +121,6 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ configs, isConnected
         
         <div className="space-y-3">
           <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-white/5 rounded-lg">
-            <div>
-              <span className="block text-slate-700 dark:text-slate-300 font-medium">Critical Alert Siren</span>
-              <span className="text-xs text-slate-500 dark:text-slate-500">Enable audible siren and browser notifications for critical events</span>
-            </div>
-            <button 
-              onClick={() => setSoundEnabled(!soundEnabled)}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${soundEnabled ? 'bg-blue-600' : 'bg-slate-200 dark:bg-white/10'}`}
-            >
-              <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${soundEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
-            </button>
-          </div>
-
-          <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-white/5 rounded-lg">
             <span className="text-slate-700 dark:text-slate-300">Critical Alert Multiplier</span>
             <span className="font-mono text-sm bg-slate-200 dark:bg-white/10 dark:text-slate-300 px-2 py-1 rounded">1.2x warning threshold</span>
           </div>
@@ -145,7 +130,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ configs, isConnected
           </div>
           <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-white/5 rounded-lg">
             <span className="text-slate-700 dark:text-slate-300">Data Polling Interval</span>
-            <span className="font-mono text-sm bg-slate-200 dark:bg-white/10 dark:text-slate-300 px-2 py-1 rounded">0.5 seconds</span>
+            <span className="font-mono text-sm bg-slate-200 dark:bg-white/10 dark:text-slate-300 px-2 py-1 rounded">2 seconds</span>
           </div>
         </div>
       </div>

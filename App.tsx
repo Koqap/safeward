@@ -29,7 +29,6 @@ const App: React.FC = () => {
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [isConnected, setIsConnected] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
-  const [soundEnabled, setSoundEnabled] = useState(false); // Default to false (Silent)
 
   // Toggle Dark Mode
   useEffect(() => {
@@ -39,43 +38,6 @@ const App: React.FC = () => {
       document.documentElement.classList.remove('dark');
     }
   }, [darkMode]);
-
-  // Request Notification Permission (Only if sound enabled)
-  useEffect(() => {
-    if (soundEnabled && 'Notification' in window && Notification.permission !== 'granted') {
-      Notification.requestPermission();
-    }
-  }, [soundEnabled]);
-
-  // Play Siren Sound
-  const playAlertSound = useCallback(() => {
-    if (!soundEnabled) return; // Silent mode check
-    
-    try {
-      const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
-      if (!AudioContext) return;
-      
-      const ctx = new AudioContext();
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-
-      // Siren effect: Low to High frequency sweep
-      osc.type = 'sawtooth';
-      osc.frequency.setValueAtTime(440, ctx.currentTime);
-      osc.frequency.linearRampToValueAtTime(880, ctx.currentTime + 0.5);
-      
-      gain.gain.setValueAtTime(0.3, ctx.currentTime);
-      gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.5);
-
-      osc.start();
-      osc.stop(ctx.currentTime + 0.5);
-    } catch (e) {
-      console.error('Audio playback failed', e);
-    }
-  }, [soundEnabled]);
 
   // Convert API data to SensorReading format
   const convertApiDataToReadings = useCallback((apiData: ApiSensorData[]): SensorReading[] => {
@@ -154,16 +116,8 @@ const App: React.FC = () => {
         // HOSPITAL PROTOCOL:
         // WARNING = Visual Only (Yellow) - No Sound, No Pop-up
         // CRITICAL = Siren + Pop-up Notification (ONLY IF ENABLED)
-        if (severity === 'CRITICAL' && soundEnabled) {
-           playAlertSound();
-           if ('Notification' in window && Notification.permission === 'granted') {
-             // Use a tag to prevent spamming notifications for the same alert
-             new Notification('CRITICAL ALERT', {
-               body: message,
-               icon: '/vite.svg',
-               tag: reading.id 
-             });
-           }
+        if (severity === 'CRITICAL') {
+           // No sound or notification logic here, as per removal
         }
       }
     });
@@ -186,7 +140,7 @@ const App: React.FC = () => {
         return uniqueAlerts.sort((a, b) => b.timestamp - a.timestamp);
       });
     }
-  }, [playAlertSound]);
+  }, []);
 
   // Fetch data from API
   const fetchSensorData = useCallback(async () => {
@@ -242,7 +196,7 @@ const App: React.FC = () => {
     fetchSensorData();
     
     // Set up polling interval
-    const interval = setInterval(fetchSensorData, 500);
+    const interval = setInterval(fetchSensorData, 2000);
 
     return () => clearInterval(interval);
   }, [fetchSensorData]);
@@ -422,8 +376,6 @@ const App: React.FC = () => {
                 <SettingsView 
                   configs={SENSOR_CONFIGS} 
                   isConnected={isConnected} 
-                  soundEnabled={soundEnabled}
-                  setSoundEnabled={setSoundEnabled}
                 />
              )}
            </div>
